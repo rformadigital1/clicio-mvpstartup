@@ -10,8 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast"
 import { useRole } from "@/app/dashboard/layout"
 import { AlertDialog } from "@/components/ui/alert-dialog"
-import { Search, Users, Trash2 } from "lucide-react"
-import type { Customer } from "@/lib/types"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, Users, Trash2, Car, Plus, ExternalLink } from "lucide-react"
+import type { Customer, Vehicle } from "@/lib/types"
+import Link from "next/link"
 
 export default function CustomersPage() {
   const supabase = createClient()
@@ -22,6 +25,13 @@ export default function CustomersPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const [search, setSearch] = useState("")
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [vehicleDialogOpen, setVehicleDialogOpen] = useState(false)
+  const [vehicleCustomerId, setVehicleCustomerId] = useState<string | null>(null)
+  const [vehPlate, setVehPlate] = useState("")
+  const [vehBrand, setVehBrand] = useState("")
+  const [vehModel, setVehModel] = useState("")
+  const [vehYear, setVehYear] = useState("")
 
   useEffect(() => { loadCustomers() }, [])
 
@@ -45,6 +55,12 @@ export default function CustomersPage() {
 
     if (error) toast({ title: "Error al cargar clientes", description: error.message, variant: "destructive" })
     setCustomers(data ?? [])
+
+    const { data: vehData } = await supabase
+      .from("vehicles")
+      .select("*")
+      .eq("tenant_id", profile.tenant_id)
+    setVehicles(vehData ?? [])
   }
 
   async function handleAddCustomer(e: React.FormEvent<HTMLFormElement>) {
@@ -63,6 +79,37 @@ export default function CustomersPage() {
     if (error) { toast({ title: "Error al crear cliente", description: error.message, variant: "destructive" }); return }
     toast({ title: "Cliente creado" })
     setDialogOpen(false)
+    loadCustomers()
+  }
+
+  function resetVehicleForm() {
+    setVehPlate(""); setVehBrand(""); setVehModel(""); setVehYear("")
+  }
+
+  async function handleAddVehicle() {
+    if (!tenantId || !vehicleCustomerId || !vehPlate.trim()) {
+      toast({ title: "Error", description: "La patente es obligatoria", variant: "destructive" })
+      return
+    }
+    const { error } = await supabase.from("vehicles").insert({
+      tenant_id: tenantId,
+      customer_id: vehicleCustomerId,
+      plate: vehPlate.trim().toUpperCase(),
+      brand: vehBrand.trim() || null,
+      model: vehModel.trim() || null,
+      year: vehYear ? parseInt(vehYear) : null,
+    })
+    if (error) { toast({ title: "Error al agregar vehículo", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Vehículo agregado" })
+    setVehicleDialogOpen(false)
+    resetVehicleForm()
+    loadCustomers()
+  }
+
+  async function handleDeleteVehicle(vehId: string) {
+    const { error } = await supabase.from("vehicles").delete().eq("id", vehId)
+    if (error) { toast({ title: "Error al eliminar vehículo", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Vehículo eliminado" })
     loadCustomers()
   }
 
@@ -159,9 +206,37 @@ export default function CustomersPage() {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
-                  {customer.plate && <p className="text-muted-foreground">Patente: {customer.plate}</p>}
-                  {customer.vehicle && <p className="text-muted-foreground">Vehículo: {customer.vehicle}</p>}
-                  <p className="font-medium mt-2">Sellos: {customer.stamps} ⭐</p>
+                  <p className="font-medium">Sellos: {customer.stamps} ⭐</p>
+                  <Separator className="my-2" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Vehículos</span>
+                    <Button variant="ghost" size="sm" className="h-6 px-1" onClick={() => { setVehicleCustomerId(customer.id); setVehicleDialogOpen(true) }}>
+                      <Plus className="h-3 w-3 mr-1" /> Agregar
+                    </Button>
+                  </div>
+                  {vehicles.filter(v => v.customer_id === customer.id).length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">Sin vehículos registrados</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {vehicles.filter(v => v.customer_id === customer.id).map(v => (
+                        <div key={v.id} className="flex items-center justify-between group">
+                          <Link href={`/dashboard/vehicles/${v.id}`} className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors">
+                            <Car className="h-3 w-3 text-muted-foreground" />
+                            <span className="font-medium">{v.plate}</span>
+                            {v.brand && <span className="text-muted-foreground">{v.brand}</span>}
+                            {v.model && <span className="text-muted-foreground">{v.model}</span>}
+                            {v.year && <span className="text-muted-foreground">({v.year})</span>}
+                            <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </Link>
+                          {roleInfo?.isOwner && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteVehicle(v.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -177,6 +252,33 @@ export default function CustomersPage() {
         confirmText="Eliminar"
         onConfirm={() => { handleDelete(deleteTarget!.id); setDeleteTarget(null) }}
       />
+
+      <Dialog open={vehicleDialogOpen} onOpenChange={(open) => { setVehicleDialogOpen(open); if (!open) resetVehicleForm() }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Agregar vehículo</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Patente *</Label>
+              <Input value={vehPlate} onChange={(e) => setVehPlate(e.target.value)} placeholder="Ej: ABC123" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Marca</Label>
+                <Input value={vehBrand} onChange={(e) => setVehBrand(e.target.value)} placeholder="Ej: Toyota" />
+              </div>
+              <div className="space-y-2">
+                <Label>Modelo</Label>
+                <Input value={vehModel} onChange={(e) => setVehModel(e.target.value)} placeholder="Ej: Corolla" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Año</Label>
+              <Input value={vehYear} onChange={(e) => setVehYear(e.target.value)} type="number" placeholder="Ej: 2020" />
+            </div>
+            <Button onClick={handleAddVehicle} className="w-full">Guardar vehículo</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
