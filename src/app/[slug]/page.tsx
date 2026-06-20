@@ -16,6 +16,9 @@ export default function TenantSitePage() {
   const supabase = createClient()
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const [bookError, setBookError] = useState("")
   const [bookingOpen, setBookingOpen] = useState(false)
   const [bookingSuccess, setBookingSuccess] = useState(false)
 
@@ -25,24 +28,31 @@ export default function TenantSitePage() {
   }, [slug])
 
   async function loadTenant() {
-    const { data: tenants } = await supabase
+    setLoading(true)
+    const { data: tenants, error } = await supabase
       .from("tenants")
       .select("*")
       .eq("slug", slug)
 
-    if (tenants && tenants.length > 0) {
-      setTenant(tenants[0])
-      const { data: svcs } = await supabase
-        .from("services")
-        .select("*")
-        .eq("tenant_id", tenants[0].id)
-      setServices(svcs ?? [])
+    if (error || !tenants || tenants.length === 0) {
+      setNotFound(true)
+      setLoading(false)
+      return
     }
+
+    setTenant(tenants[0])
+    const { data: svcs } = await supabase
+      .from("services")
+      .select("*")
+      .eq("tenant_id", tenants[0].id)
+    setServices(svcs ?? [])
+    setLoading(false)
   }
 
   async function handleBooking(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!tenant) return
+    setBookError("")
 
     const form = new FormData(e.currentTarget)
 
@@ -57,7 +67,10 @@ export default function TenantSitePage() {
       .select()
       .single()
 
-    if (customerErr || !customer) return
+    if (customerErr || !customer) {
+      setBookError("Error al crear cliente. Intenta de nuevo.")
+      return
+    }
 
     const { error: bookingErr } = await supabase
       .from("bookings")
@@ -70,15 +83,30 @@ export default function TenantSitePage() {
         status: "reserved",
       })
 
-    if (!bookingErr) {
-      setBookingSuccess(true)
+    if (bookingErr) {
+      setBookError("Error al crear reserva. Intenta de nuevo.")
+      return
     }
+
+    setBookingSuccess(true)
   }
 
-  if (!tenant) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Taller no encontrado</p>
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    )
+  }
+
+  if (notFound || !tenant) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-5xl mb-4">🔧</p>
+          <h1 className="text-2xl font-bold mb-2">Taller no encontrado</h1>
+          <p className="text-muted-foreground">El taller que buscas no existe o la URL es incorrecta.</p>
+        </div>
       </div>
     )
   }
@@ -132,17 +160,17 @@ export default function TenantSitePage() {
           </div>
         </section>
 
-        <section className="border-t py-16">
-          <div className="container text-center">
-            <h3 className="text-2xl font-bold mb-4">Ubicación</h3>
-            {tenant.address && <p className="text-muted-foreground mb-4">{tenant.address}</p>}
-            {tenant.address && (
+        {tenant.address && (
+          <section className="border-t py-16">
+            <div className="container text-center">
+              <h3 className="text-2xl font-bold mb-4">Ubicación</h3>
+              <p className="text-muted-foreground mb-4">{tenant.address}</p>
               <div className="aspect-video max-w-xl mx-auto bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
                 Mapa - {tenant.address}
               </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         <section className="border-t py-16 text-center">
           <div className="container">
@@ -212,6 +240,7 @@ export default function TenantSitePage() {
                   <Label htmlFor="time">Hora</Label>
                   <Input id="time" name="time" type="time" required />
                 </div>
+                {bookError && <p className="text-sm text-destructive">{bookError}</p>}
                 <Button type="submit" className="w-full">Reservar</Button>
               </form>
             </>

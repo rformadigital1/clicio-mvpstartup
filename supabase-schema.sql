@@ -196,6 +196,8 @@ create policy "stamp_insert" on stamp_history for insert to authenticated with c
 );
 
 -- PUBLIC ACCESS: tenant public site
+create policy "tenant_public_select" on tenants for select to anon using (true);
+
 create policy "customer_public_insert" on customers for insert to anon with check (true);
 
 create policy "service_public_select" on services for select to anon using (true);
