@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast"
 import { useRole } from "@/app/dashboard/layout"
 import { AlertDialog } from "@/components/ui/alert-dialog"
-import { Trash2 } from "lucide-react"
+import { Search, Users, Trash2 } from "lucide-react"
 import type { Customer } from "@/lib/types"
 
 export default function CustomersPage() {
@@ -21,10 +21,9 @@ export default function CustomersPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [search, setSearch] = useState("")
 
-  useEffect(() => {
-    loadCustomers()
-  }, [])
+  useEffect(() => { loadCustomers() }, [])
 
   async function loadCustomers() {
     const { data: { user }, error: userErr } = await supabase.auth.getUser()
@@ -35,7 +34,6 @@ export default function CustomersPage() {
       .select("tenant_id")
       .eq("id", user.id)
       .single()
-
     if (profileErr || !profile) { toast({ title: "Error al cargar perfil", description: profileErr?.message, variant: "destructive" }); return }
     setTenantId(profile.tenant_id)
 
@@ -75,6 +73,16 @@ export default function CustomersPage() {
     loadCustomers()
   }
 
+  const filteredCustomers = useMemo(() => {
+    if (!search) return customers
+    const q = search.toLowerCase()
+    return customers.filter((c) =>
+      c.name.toLowerCase().includes(q) ||
+      (c.phone?.toLowerCase() ?? "").includes(q) ||
+      (c.plate?.toLowerCase() ?? "").includes(q)
+    )
+  }, [customers, search])
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -84,9 +92,7 @@ export default function CustomersPage() {
             <Button>Nuevo Cliente</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nuevo Cliente</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Nuevo Cliente</DialogTitle></DialogHeader>
             <form onSubmit={handleAddCustomer} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre</Label>
@@ -110,29 +116,58 @@ export default function CustomersPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {customers.map((customer) => (
-          <Card key={customer.id}>
-            <CardHeader className="flex flex-row items-start justify-between">
-              <CardTitle className="text-base">{customer.name}</CardTitle>
-              {roleInfo?.isOwner && (
-                <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
-              {customer.plate && <p className="text-muted-foreground">Patente: {customer.plate}</p>}
-              {customer.vehicle && <p className="text-muted-foreground">Vehículo: {customer.vehicle}</p>}
-              <p className="font-medium mt-2">Sellos: {customer.stamps} ⭐</p>
-            </CardContent>
-          </Card>
-        ))}
-        {customers.length === 0 && (
-          <p className="text-muted-foreground col-span-full text-center py-8">No hay clientes registrados</p>
-        )}
+      {/* Search */}
+      <div className="max-w-sm mb-6">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nombre, teléfono o patente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8"
+          />
+        </div>
       </div>
+
+      {/* Results */}
+      {filteredCustomers.length === 0 ? (
+        <div className="text-center py-12">
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <p className="text-lg font-medium mb-1">No hay clientes</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {customers.length === 0
+              ? "Registra tu primer cliente para comenzar."
+              : "Ningún cliente coincide con la búsqueda."}
+          </p>
+          {customers.length === 0 && (
+            <Button onClick={() => setDialogOpen(true)}>Nuevo Cliente</Button>
+          )}
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground mb-3">{filteredCustomers.length} clientes</p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredCustomers.map((customer) => (
+              <Card key={customer.id}>
+                <CardHeader className="flex flex-row items-start justify-between">
+                  <CardTitle className="text-base">{customer.name}</CardTitle>
+                  {roleInfo?.isOwner && (
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-1 text-sm">
+                  {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
+                  {customer.plate && <p className="text-muted-foreground">Patente: {customer.plate}</p>}
+                  {customer.vehicle && <p className="text-muted-foreground">Vehículo: {customer.vehicle}</p>}
+                  <p className="font-medium mt-2">Sellos: {customer.stamps} ⭐</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
 
       <AlertDialog
         open={!!deleteTarget}

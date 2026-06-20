@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { Plus } from "lucide-react"
+import { Plus, Search, Calendar as CalendarIcon } from "lucide-react"
 import type { Booking, BookingStatus, Customer, Service } from "@/lib/types"
 
 const statusColors: Record<BookingStatus, string> = {
@@ -39,9 +39,13 @@ export default function BookingsPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  // Filters
+  const [search, setSearch] = useState("")
+  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterDateFrom, setFilterDateFrom] = useState("")
+  const [filterDateTo, setFilterDateTo] = useState("")
+
+  useEffect(() => { loadData() }, [])
 
   async function loadData() {
     const { data: { user }, error: userErr } = await supabase.auth.getUser()
@@ -52,12 +56,11 @@ export default function BookingsPage() {
       .select("tenant_id")
       .eq("id", user.id)
       .single()
-
     if (profileErr || !profile) { toast({ title: "Error al cargar perfil", description: profileErr?.message, variant: "destructive" }); return }
     setTenantId(profile.tenant_id)
 
     const [bRes, cRes, sRes] = await Promise.all([
-      supabase.from("bookings").select("*, customers(*), services(*)").eq("tenant_id", profile.tenant_id).order("booking_date").order("booking_time"),
+      supabase.from("bookings").select("*, customers(*), services(*)").eq("tenant_id", profile.tenant_id).order("booking_date", { ascending: false }).order("booking_time"),
       supabase.from("customers").select("*").eq("tenant_id", profile.tenant_id).order("name"),
       supabase.from("services").select("*").eq("tenant_id", profile.tenant_id).order("name"),
     ])
@@ -101,6 +104,25 @@ export default function BookingsPage() {
     loadData()
   }
 
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((b) => {
+      // Search by customer name or plate
+      if (search) {
+        const q = search.toLowerCase()
+        const name = b.customers?.name?.toLowerCase() ?? ""
+        const plate = b.customers?.plate?.toLowerCase() ?? ""
+        if (!name.includes(q) && !plate.includes(q)) return false
+      }
+      // Status filter
+      if (filterStatus !== "all" && b.status !== filterStatus) return false
+      // Date from
+      if (filterDateFrom && b.booking_date < filterDateFrom) return false
+      // Date to
+      if (filterDateTo && b.booking_date > filterDateTo) return false
+      return true
+    })
+  }, [bookings, search, filterStatus, filterDateFrom, filterDateTo])
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -110,9 +132,7 @@ export default function BookingsPage() {
             <Button><Plus className="mr-1 h-4 w-4" /> Nueva Reserva</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nueva Reserva</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Nueva Reserva</DialogTitle></DialogHeader>
             <form onSubmit={handleAddBooking} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="customer_id">Cliente</Label>
@@ -152,39 +172,100 @@ export default function BookingsPage() {
         </Dialog>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-6 items-end">
+        <div className="flex-1 min-w-[200px]">
+          <Label className="text-xs mb-1 block">Buscar cliente/patente</Label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+        </div>
+        <div>
+          <Label className="text-xs mb-1 block">Estado</Label>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {Object.entries(statusLabels).map(([key, label]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs mb-1 block">Desde</Label>
+          <Input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="w-36" />
+        </div>
+        <div>
+          <Label className="text-xs mb-1 block">Hasta</Label>
+          <Input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="w-36" />
+        </div>
+        {(search || filterStatus !== "all" || filterDateFrom || filterDateTo) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterStatus("all"); setFilterDateFrom(""); setFilterDateTo("") }}>
+            Limpiar
+          </Button>
+        )}
+      </div>
+
+      {/* Bookings count */}
+      <p className="text-sm text-muted-foreground mb-3">
+        {filteredBookings.length} de {bookings.length} reservas
+      </p>
+
+      {/* Results */}
       <div className="space-y-3">
-        {bookings.map((booking) => (
-          <Card key={booking.id}>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="text-right min-w-[60px]">
-                <p className="font-medium">{booking.booking_time?.slice(0, 5)}</p>
-                <p className="text-xs text-muted-foreground">{booking.booking_date}</p>
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{booking.customers?.name}</p>
-                <p className="text-sm text-muted-foreground">{booking.customers?.plate} - {booking.services?.name}</p>
-              </div>
-              <Badge className={statusColors[booking.status as BookingStatus]}>
-                {statusLabels[booking.status as BookingStatus]}
-              </Badge>
-              <Select
-                value={booking.status}
-                onValueChange={(val: BookingStatus) => updateStatus(booking.id, val)}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(statusLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        ))}
-        {bookings.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No hay reservas</p>
+        {filteredBookings.length === 0 ? (
+          <div className="text-center py-12">
+            <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-lg font-medium mb-1">No hay reservas</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              {bookings.length === 0
+                ? "Comienza agendando tu primer servicio."
+                : "Ninguna reserva coincide con los filtros."}
+            </p>
+            {bookings.length === 0 && (
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" /> Nueva Reserva
+              </Button>
+            )}
+          </div>
+        ) : (
+          filteredBookings.map((booking) => (
+            <Card key={booking.id}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="text-right min-w-[60px]">
+                  <p className="font-medium">{booking.booking_time?.slice(0, 5)}</p>
+                  <p className="text-xs text-muted-foreground">{booking.booking_date}</p>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{booking.customers?.name}</p>
+                  <p className="text-sm text-muted-foreground">{booking.customers?.plate} — {booking.services?.name}</p>
+                </div>
+                <Badge className={statusColors[booking.status as BookingStatus]}>
+                  {statusLabels[booking.status as BookingStatus]}
+                </Badge>
+                <Select
+                  value={booking.status}
+                  onValueChange={(val: BookingStatus) => updateStatus(booking.id, val)}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(statusLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
     </div>

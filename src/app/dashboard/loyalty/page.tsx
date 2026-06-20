@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Trash2, Gift } from "lucide-react"
+import { Trash2, Gift, Star } from "lucide-react"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { LoyaltyRule, Customer } from "@/lib/types"
 
@@ -190,9 +190,11 @@ export default function LoyaltyPage() {
           </Card>
         ))}
         {rules.length === 0 && (
-          <div className="col-span-full text-center py-8">
-            <p className="text-muted-foreground">Sin reglas de fidelización</p>
-            <p className="text-sm text-muted-foreground mt-1">Ej: 5 sellos = Lavado gratis</p>
+          <div className="col-span-full text-center py-12">
+            <Gift className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-lg font-medium mb-1">Sin reglas de fidelización</p>
+            <p className="text-sm text-muted-foreground mb-2">Crea tu primera regla, ej: 5 sellos = Lavado gratis</p>
+            <Button variant="outline" onClick={() => setDialogOpen(true)}>Crear Regla</Button>
           </div>
         )}
       </div>
@@ -214,9 +216,11 @@ export default function LoyaltyPage() {
           </Card>
         ))}
         {customers.filter((c) => c.stamps > 0).length === 0 && (
-          <p className="text-muted-foreground col-span-full text-center py-4">
-            Sin sellos entregados aún. Los sellos se asignan automáticamente al marcar una reserva como "Entregado".
-          </p>
+          <div className="col-span-full text-center py-8">
+            <Star className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+            <p className="text-muted-foreground">Sin sellos entregados aún</p>
+            <p className="text-sm text-muted-foreground mt-1">Los sellos se asignan automáticamente al marcar una reserva como "Entregado".</p>
+          </div>
         )}
       </div>
 

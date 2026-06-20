@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Trash2 } from "lucide-react"
+import { Trash2, Car } from "lucide-react"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { Service } from "@/lib/types"
 
@@ -119,7 +119,12 @@ export default function ServicesPage() {
           </Card>
         ))}
         {services.length === 0 && (
-          <p className="text-muted-foreground col-span-full text-center py-8">No hay servicios configurados</p>
+          <div className="col-span-full text-center py-12">
+            <Car className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-lg font-medium mb-1">No hay servicios</p>
+            <p className="text-sm text-muted-foreground mb-4">Configura tu primer servicio para comenzar a recibir reservas.</p>
+            <Button onClick={() => setDialogOpen(true)}>Crear Servicio</Button>
+          </div>
         )}
       </div>
 
