@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { checkAvailability } from "@/lib/availability"
 import { Plus } from "lucide-react"
 import type { Booking, BookingStatus, Customer, Service } from "@/lib/types"
 
@@ -81,6 +82,10 @@ export default function BookingsPage() {
     if (!tenantId) { toast({ title: "Error", description: "Tenant no encontrado", variant: "destructive" }); return }
 
     const form = new FormData(e.currentTarget)
+
+    const check = await checkAvailability(tenantId, form.get("booking_date") as string, form.get("booking_time") as string)
+    if (!check.available) { toast({ title: "Horario no disponible", description: check.reason, variant: "destructive" }); return }
+
     const { error } = await supabase.from("bookings").insert({
       tenant_id: tenantId,
       customer_id: form.get("customer_id") as string,

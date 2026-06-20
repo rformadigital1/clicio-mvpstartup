@@ -3,19 +3,21 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Tenant, Service } from "@/lib/types"
+import type { Tenant, Service, BusinessHour } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { checkAvailability } from "@/lib/availability"
 
 export default function TenantSitePage() {
   const { slug } = useParams<{ slug: string }>()
   const supabase = createClient()
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [services, setServices] = useState<Service[]>([])
+  const [hours, setHours] = useState<BusinessHour[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [bookError, setBookError] = useState("")
@@ -41,11 +43,12 @@ export default function TenantSitePage() {
     }
 
     setTenant(tenants[0])
-    const { data: svcs } = await supabase
-      .from("services")
-      .select("*")
-      .eq("tenant_id", tenants[0].id)
-    setServices(svcs ?? [])
+    const [svcRes, hoursRes] = await Promise.all([
+      supabase.from("services").select("*").eq("tenant_id", tenants[0].id),
+      supabase.from("business_hours").select("*").eq("tenant_id", tenants[0].id).order("day_of_week"),
+    ])
+    setServices(svcRes.data ?? [])
+    setHours(hoursRes.data ?? [])
     setLoading(false)
   }
 
@@ -55,6 +58,9 @@ export default function TenantSitePage() {
     setBookError("")
 
     const form = new FormData(e.currentTarget)
+
+    const check = await checkAvailability(tenant.id, form.get("date") as string, form.get("time") as string)
+    if (!check.available) { setBookError(check.reason ?? "Horario no disponible"); return }
 
     const { data: customer, error: customerErr } = await supabase
       .from("customers")
@@ -148,6 +154,30 @@ export default function TenantSitePage() {
             </div>
           </div>
         </section>
+
+        {hours.length > 0 && (
+          <section className="border-t py-16 bg-muted/50">
+            <div className="container max-w-lg">
+              <h3 className="text-2xl font-bold text-center mb-8">Horarios</h3>
+              <div className="space-y-3">
+                {hours.filter(h => h.is_open).length > 0 ? (
+                  hours.map((h) => (
+                    <div key={h.day_of_week} className="flex justify-between items-center">
+                      <span className="font-medium">{["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][h.day_of_week]}</span>
+                      {h.is_open ? (
+                        <span className="text-muted-foreground">{h.open_time.slice(0, 5)} — {h.close_time.slice(0, 5)}</span>
+                      ) : (
+                        <span className="text-muted-foreground">Cerrado</span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground">Sin horario disponible</p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="border-t py-16 bg-muted/50">
           <div className="container text-center">

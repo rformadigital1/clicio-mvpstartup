@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Trash2, Gift } from "lucide-react"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { LoyaltyRule, Customer } from "@/lib/types"
 
 export default function LoyaltyPage() {
@@ -20,6 +21,7 @@ export default function LoyaltyPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [claimDialogOpen, setClaimDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   useEffect(() => {
     loadData()
@@ -175,7 +177,7 @@ export default function LoyaltyPage() {
           <Card key={rule.id}>
             <CardHeader className="flex flex-row items-start justify-between">
               <CardTitle className="text-base">{rule.reward_name}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(rule.id)}>
+              <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: rule.id, name: rule.reward_name })}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -217,6 +219,15 @@ export default function LoyaltyPage() {
           </p>
         )}
       </div>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        title="Eliminar regla"
+        description={`¿Eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        onConfirm={() => { handleDelete(deleteTarget!.id); setDeleteTarget(null) }}
+      />
     </div>
   )
 }

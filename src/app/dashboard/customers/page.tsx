@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { AlertDialog } from "@/components/ui/alert-dialog"
+import { Trash2 } from "lucide-react"
 import type { Customer } from "@/lib/types"
 
 export default function CustomersPage() {
@@ -16,6 +18,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   useEffect(() => {
     loadCustomers()
@@ -63,6 +66,13 @@ export default function CustomersPage() {
     loadCustomers()
   }
 
+  async function handleDelete(id: string) {
+    const { error } = await supabase.from("customers").delete().eq("id", id)
+    if (error) { toast({ title: "Error al eliminar", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Cliente eliminado" })
+    loadCustomers()
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -101,8 +111,11 @@ export default function CustomersPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {customers.map((customer) => (
           <Card key={customer.id}>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-start justify-between">
               <CardTitle className="text-base">{customer.name}</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
               {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
@@ -116,6 +129,15 @@ export default function CustomersPage() {
           <p className="text-muted-foreground col-span-full text-center py-8">No hay clientes registrados</p>
         )}
       </div>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        title="Eliminar cliente"
+        description={`¿Eliminar a "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        onConfirm={() => { handleDelete(deleteTarget!.id); setDeleteTarget(null) }}
+      />
     </div>
   )
 }

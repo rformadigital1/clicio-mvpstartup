@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Trash2 } from "lucide-react"
+import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { Service } from "@/lib/types"
 
 export default function ServicesPage() {
@@ -17,6 +18,7 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   useEffect(() => {
     loadServices()
@@ -106,7 +108,7 @@ export default function ServicesPage() {
           <Card key={service.id}>
             <CardHeader className="flex flex-row items-start justify-between">
               <CardTitle className="text-base">{service.name}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(service.id)}>
+              <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: service.id, name: service.name })}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -120,6 +122,15 @@ export default function ServicesPage() {
           <p className="text-muted-foreground col-span-full text-center py-8">No hay servicios configurados</p>
         )}
       </div>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        title="Eliminar servicio"
+        description={`¿Eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        onConfirm={() => { handleDelete(deleteTarget!.id); setDeleteTarget(null) }}
+      />
     </div>
   )
 }

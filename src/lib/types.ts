@@ -67,3 +67,19 @@ export interface StampHistory {
   booking_id: string | null
   created_at: string
 }
+
+export interface BusinessHour {
+  id: string
+  tenant_id: string
+  day_of_week: number
+  open_time: string
+  close_time: string
+  is_open: boolean
+}
+
+export interface BlockedDate {
+  id: string
+  tenant_id: string
+  date: string
+  reason: string | null
+}

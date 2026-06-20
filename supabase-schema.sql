@@ -340,6 +340,60 @@ create trigger on_customer_stamps_update
   after update on customers
   for each row execute function check_reward_eligibility();
 
+-- 9. BUSINESS HOURS
+create table if not exists business_hours (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id),
+  day_of_week int not null check (day_of_week between 0 and 6),
+  open_time time not null,
+  close_time time not null,
+  is_open boolean default true,
+  unique(tenant_id, day_of_week)
+);
+
+alter table business_hours enable row level security;
+
+create policy "business_hours_select" on business_hours for select to authenticated using (
+  tenant_id = public.get_user_tenant_id()
+);
+create policy "business_hours_insert" on business_hours for insert to authenticated with check (
+  tenant_id = public.get_user_tenant_id()
+);
+create policy "business_hours_update" on business_hours for update to authenticated using (
+  tenant_id = public.get_user_tenant_id()
+) with check (
+  tenant_id = public.get_user_tenant_id()
+);
+create policy "business_hours_delete" on business_hours for delete to authenticated using (
+  tenant_id = public.get_user_tenant_id()
+);
+create policy "business_hours_public_select" on business_hours for select to anon using (true);
+
+create index if not exists idx_business_hours_tenant_id on business_hours(tenant_id);
+
+-- 10. BLOCKED DATES
+create table if not exists blocked_dates (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id),
+  date date not null,
+  reason text,
+  unique(tenant_id, date)
+);
+
+alter table blocked_dates enable row level security;
+
+create policy "blocked_dates_select" on blocked_dates for select to authenticated using (
+  tenant_id = public.get_user_tenant_id()
+);
+create policy "blocked_dates_insert" on blocked_dates for insert to authenticated with check (
+  tenant_id = public.get_user_tenant_id()
+);
+create policy "blocked_dates_delete" on blocked_dates for delete to authenticated using (
+  tenant_id = public.get_user_tenant_id()
+);
+
+create index if not exists idx_blocked_dates_tenant_id on blocked_dates(tenant_id);
+
 -- Additional FK indexes
 create index if not exists idx_bookings_customer_id on bookings(customer_id);
 create index if not exists idx_bookings_service_id on bookings(service_id);
