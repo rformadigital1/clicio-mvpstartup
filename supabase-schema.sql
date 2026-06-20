@@ -41,7 +41,6 @@ create table if not exists services (
   name text not null,
   price integer,
   duration integer,
-  image_url text,
   created_at timestamptz default now()
 );
 
@@ -303,6 +302,46 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
+
+-- 15. GALLERY IMAGES
+create table if not exists gallery_images (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id) on delete cascade,
+  image_url text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table gallery_images enable row level security;
+
+create policy "gallery_select" on gallery_images for select to authenticated
+  using (tenant_id = public.get_user_tenant_id());
+create policy "gallery_insert" on gallery_images for insert to authenticated
+  with check (tenant_id = public.get_user_tenant_id() and public.is_owner());
+create policy "gallery_delete" on gallery_images for delete to authenticated
+  using (tenant_id = public.get_user_tenant_id() and public.is_owner());
+create policy "gallery_public_select" on gallery_images for select to anon using (true);
+
+create index if not exists idx_gallery_images_tenant_id on gallery_images(tenant_id);
+
+-- 16. STORAGE: gallery bucket (create via Supabase dashboard or SQL)
+-- RLS policies for storage.objects
+create policy "gallery_storage_public_select"
+on storage.objects for select to anon
+using (bucket_id = 'gallery');
+
+create policy "gallery_storage_authenticated_insert"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'gallery'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+create policy "gallery_storage_authenticated_delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'gallery'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
 
 -- Revoke public execute on trigger functions
 revoke execute on function handle_new_user from anon, authenticated;

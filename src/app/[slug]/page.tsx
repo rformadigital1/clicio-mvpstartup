@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Tenant, Service, BusinessHour, Vehicle } from "@/lib/types"
+import type { Tenant, Service, BusinessHour, Vehicle, GalleryImage } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +18,8 @@ export default function TenantSitePage() {
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [hours, setHours] = useState<BusinessHour[]>([])
+  const [gallery, setGallery] = useState<GalleryImage[]>([])
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [bookError, setBookError] = useState("")
@@ -66,12 +68,14 @@ export default function TenantSitePage() {
     }
 
     setTenant(tenants[0])
-    const [svcRes, hoursRes] = await Promise.all([
+    const [svcRes, hoursRes, galRes] = await Promise.all([
       supabase.from("services").select("*").eq("tenant_id", tenants[0].id),
       supabase.from("business_hours").select("*").eq("tenant_id", tenants[0].id).order("day_of_week"),
+      supabase.from("gallery_images").select("*").eq("tenant_id", tenants[0].id).order("created_at", { ascending: false }),
     ])
     setServices(svcRes.data ?? [])
     setHours(hoursRes.data ?? [])
+    setGallery(galRes.data ?? [])
     setLoading(false)
   }
 
@@ -253,11 +257,6 @@ export default function TenantSitePage() {
             <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
               {services.map((s) => (
                 <Card key={s.id}>
-                  {s.image_url && (
-                    <div className="w-full h-40 overflow-hidden rounded-t-xl">
-                      <img src={s.image_url} alt={s.name} className="w-full h-full object-cover" />
-                    </div>
-                  )}
                   <CardHeader>
                     <CardTitle>{s.name}</CardTitle>
                   </CardHeader>
@@ -270,6 +269,31 @@ export default function TenantSitePage() {
             </div>
           </div>
         </section>
+
+        {gallery.length > 0 && (
+          <section className="border-t py-16">
+            <div className="container">
+              <h3 className="text-2xl font-bold text-center mb-8">Trabajos Realizados</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                {gallery.map((img) => (
+                  <button key={img.id} onClick={() => setLightboxUrl(img.image_url)} className="aspect-square overflow-hidden rounded-xl group">
+                    <img src={img.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-pointer"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <img src={lightboxUrl} alt="" className="max-w-full max-h-full object-contain" />
+          </div>
+        )}
 
         {hours.length > 0 && (
           <section className="border-t py-16 bg-muted/50">

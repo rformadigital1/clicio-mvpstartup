@@ -53,7 +53,6 @@ export interface Service {
   name: string
   price: number | null
   duration: number | null
-  image_url: string | null
   created_at: string
 }
 
@@ -105,6 +104,13 @@ export interface BlockedDate {
   tenant_id: string
   date: string
   reason: string | null
+}
+
+export interface GalleryImage {
+  id: string
+  tenant_id: string
+  image_url: string
+  created_at: string
 }
 
 export interface StaffInvitation {

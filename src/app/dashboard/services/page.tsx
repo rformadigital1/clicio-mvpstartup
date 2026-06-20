@@ -8,11 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Trash2, Car, Pencil, ImageIcon } from "lucide-react"
+import { Trash2, Car } from "lucide-react"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { Service } from "@/lib/types"
-
-const STORAGE_BUCKET = "service-images"
 
 export default function ServicesPage() {
   const supabase = createClient()
@@ -21,10 +19,6 @@ export default function ServicesPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [editTarget, setEditTarget] = useState<Service | null>(null)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   useEffect(() => {
     loadServices()
@@ -53,67 +47,21 @@ export default function ServicesPage() {
     setServices(data ?? [])
   }
 
-  async function uploadImage(serviceId: string, file: File): Promise<string | null> {
-    const ext = file.name.split(".").pop() ?? "jpg"
-    const path = `${tenantId}/${serviceId}.${ext}`
-    const { error: uploadErr } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true })
-    if (uploadErr) { toast({ title: "Error al subir imagen", description: uploadErr.message, variant: "destructive" }); return null }
-    const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path)
-    return urlData?.publicUrl ?? null
-  }
-
   async function handleAddService(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!tenantId) { toast({ title: "Error", description: "Tenant no encontrado", variant: "destructive" }); return }
 
     const form = new FormData(e.currentTarget)
-    const { data: newService, error } = await supabase.from("services").insert({
+    const { error } = await supabase.from("services").insert({
       tenant_id: tenantId,
       name: form.get("name") as string,
       price: parseInt(form.get("price") as string) || null,
       duration: parseInt(form.get("duration") as string) || null,
-    }).select().single()
+    })
 
-    if (error || !newService) { toast({ title: "Error al crear servicio", description: error?.message, variant: "destructive" }); return }
-
-    if (imageFile) {
-      const url = await uploadImage(newService.id, imageFile)
-      if (url) {
-        await supabase.from("services").update({ image_url: url }).eq("id", newService.id)
-      }
-    }
-
+    if (error) { toast({ title: "Error al crear servicio", description: error.message, variant: "destructive" }); return }
     toast({ title: "Servicio creado" })
     setDialogOpen(false)
-    setImageFile(null)
-    setImagePreview(null)
-    loadServices()
-  }
-
-  async function handleEditService(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!editTarget) return
-
-    const form = new FormData(e.currentTarget)
-    const updates: Record<string, any> = {
-      name: form.get("name") as string,
-      price: parseInt(form.get("price") as string) || null,
-      duration: parseInt(form.get("duration") as string) || null,
-    }
-
-    if (imageFile) {
-      const url = await uploadImage(editTarget.id, imageFile)
-      if (url) updates.image_url = url
-    }
-
-    const { error } = await supabase.from("services").update(updates).eq("id", editTarget.id)
-    if (error) { toast({ title: "Error al actualizar", description: error.message, variant: "destructive" }); return }
-
-    toast({ title: "Servicio actualizado" })
-    setEditDialogOpen(false)
-    setEditTarget(null)
-    setImageFile(null)
-    setImagePreview(null)
     loadServices()
   }
 
@@ -132,36 +80,7 @@ export default function ServicesPage() {
           <DialogTrigger asChild>
             <Button>Nuevo Servicio</Button>
           </DialogTrigger>
-          <Dialog open={editDialogOpen} onOpenChange={(v) => { setEditDialogOpen(v); if (!v) { setEditTarget(null); setImageFile(null); setImagePreview(null) } }}>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Editar Servicio</DialogTitle></DialogHeader>
-              <form onSubmit={handleEditService} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nombre</Label>
-                  <Input id="edit-name" name="name" required defaultValue={editTarget?.name ?? ""} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-price">Precio ($)</Label>
-                  <Input id="edit-price" name="price" type="number" defaultValue={editTarget?.price ?? ""} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-duration">Duración (minutos)</Label>
-                  <Input id="edit-duration" name="duration" type="number" defaultValue={editTarget?.duration ?? ""} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Imagen</Label>
-                  {(imagePreview || editTarget?.image_url) && (
-                    <img src={imagePreview ?? editTarget?.image_url ?? ""} alt="Preview" className="w-32 h-32 object-cover rounded mb-2" />
-                  )}
-                  <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) { setImageFile(file); setImagePreview(URL.createObjectURL(file)) }
-                  }} />
-                </div>
-                <Button type="submit" className="w-full">Guardar</Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nuevo Servicio</DialogTitle>
@@ -179,14 +98,6 @@ export default function ServicesPage() {
                 <Label htmlFor="duration">Duración (minutos)</Label>
                 <Input id="duration" name="duration" type="number" placeholder="Ej: 60" />
               </div>
-              <div className="space-y-2">
-                <Label>Imagen</Label>
-                <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) { setImageFile(file); setImagePreview(URL.createObjectURL(file)) }
-                }} />
-                {imagePreview && <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded" />}
-              </div>
               <Button type="submit" className="w-full">Guardar</Button>
             </form>
           </DialogContent>
@@ -196,22 +107,11 @@ export default function ServicesPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
           <Card key={service.id}>
-            <CardHeader className="flex flex-row items-start justify-between gap-2">
-              <div className="flex items-center gap-3 min-w-0">
-                {service.image_url
-                  ? <img src={service.image_url} alt={service.name} className="w-12 h-12 rounded object-cover flex-shrink-0" />
-                  : <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>
-                }
-                <CardTitle className="text-base truncate">{service.name}</CardTitle>
-              </div>
-              <div className="flex gap-1 flex-shrink-0">
-                <Button variant="ghost" size="icon" onClick={() => { setEditTarget(service); setEditDialogOpen(true); setImageFile(null); setImagePreview(null) }}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: service.id, name: service.name })}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <CardTitle className="text-base">{service.name}</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: service.id, name: service.name })}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
               {service.price && <p className="text-muted-foreground">$ {service.price.toLocaleString("es-CL")}</p>}

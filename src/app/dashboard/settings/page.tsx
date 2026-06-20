@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { StaffSection } from "./staff-section"
+import { GallerySection } from "./gallery-section"
 import { Copy, Check, Plus, X, Upload, Trash2 } from "lucide-react"
 import type { Tenant, BusinessHour, BlockedDate } from "@/lib/types"
 
@@ -375,6 +376,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <GallerySection />
 
       <StaffSection />
     </div>
