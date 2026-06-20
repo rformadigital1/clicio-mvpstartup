@@ -253,6 +253,11 @@ export default function TenantSitePage() {
             <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
               {services.map((s) => (
                 <Card key={s.id}>
+                  {s.image_url && (
+                    <div className="w-full h-40 overflow-hidden rounded-t-xl">
+                      <img src={s.image_url} alt={s.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <CardHeader>
                     <CardTitle>{s.name}</CardTitle>
                   </CardHeader>

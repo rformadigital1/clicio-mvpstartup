@@ -41,6 +41,7 @@ create table if not exists services (
   name text not null,
   price integer,
   duration integer,
+  image_url text,
   created_at timestamptz default now()
 );
 
@@ -525,3 +526,34 @@ create policy "booking_services_authenticated_insert" on booking_services for in
 
 create index if not exists idx_booking_services_booking_id on booking_services(booking_id);
 create index if not exists idx_booking_services_service_id on booking_services(service_id);
+
+-- 14. STORAGE: service-images bucket (create via Supabase dashboard or SQL)
+-- RLS policies for storage.objects
+create policy "service_images_public_select"
+on storage.objects for select to anon
+using (bucket_id = 'service-images');
+
+create policy "service_images_authenticated_insert"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'service-images'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+create policy "service_images_authenticated_update"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'service-images'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+)
+with check (
+  bucket_id = 'service-images'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+create policy "service_images_authenticated_delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'service-images'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);

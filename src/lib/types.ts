@@ -53,6 +53,7 @@ export interface Service {
   name: string
   price: number | null
   duration: number | null
+  image_url: string | null
   created_at: string
 }
 

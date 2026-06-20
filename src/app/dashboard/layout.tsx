@@ -33,6 +33,7 @@ export function useRole() {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
   { href: "/dashboard/bookings", label: "Agenda", icon: Calendar, ownerOnly: false },
+  { href: "/dashboard/calendar", label: "Calendario", icon: Calendar, ownerOnly: false },
   { href: "/dashboard/customers", label: "Clientes", icon: Users, ownerOnly: false },
   { href: "/dashboard/services", label: "Servicios", icon: Car, ownerOnly: true },
   { href: "/dashboard/loyalty", label: "Fidelización", icon: Gift, ownerOnly: true },
