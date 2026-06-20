@@ -10,6 +10,11 @@ import type { GalleryImage } from "@/lib/types"
 
 const STORAGE_BUCKET = "gallery"
 
+function genId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID()
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+}
+
 export function GallerySection() {
   const supabase = createClient()
   const { toast } = useToast()
@@ -40,7 +45,7 @@ export function GallerySection() {
     setUploading(true)
     const file = e.target.files[0]
     const ext = file.name.split(".").pop() ?? "jpg"
-    const path = `${tenantId}/${crypto.randomUUID()}.${ext}`
+    const path = `${tenantId}/${genId()}.${ext}`
 
     const { error: uploadErr } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file)
     if (uploadErr) {

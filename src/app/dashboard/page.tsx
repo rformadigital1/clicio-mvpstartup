@@ -80,16 +80,20 @@ export default function DashboardPage() {
     // Monthly delivered bookings + revenue
     const { data: monthData } = await supabase
       .from("bookings")
-      .select("status, services(price)")
+      .select("status, services(price), booking_services(services(price))")
       .eq("tenant_id", tid)
       .gte("created_at", monthStart)
 
     let revenue = 0
     let total = 0
-    monthData?.forEach((b) => {
+    monthData?.forEach((b: any) => {
       total++
       if (b.status === "delivered") {
-        revenue += (b.services as any)?.price ?? 0
+        if (b.booking_services?.length > 0) {
+          revenue += b.booking_services.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+        } else {
+          revenue += b.services?.price ?? 0
+        }
       }
     })
     setMonthRevenue(revenue)
@@ -102,12 +106,14 @@ export default function DashboardPage() {
       .eq("tenant_id", tid)
     setTotalCustomers(custCount ?? 0)
 
-    // Recent bookings (last 5)
+    // Recent bookings (next 5 upcoming)
     const { data: recent } = await supabase
       .from("bookings")
-      .select("*, customers(name, plate), services(name)")
+      .select("*, customers(name, plate), services(name), vehicles(plate, brand), booking_services(services(name))")
       .eq("tenant_id", tid)
-      .order("created_at", { ascending: false })
+      .gte("booking_date", today)
+      .order("booking_date", { ascending: true })
+      .order("booking_time", { ascending: true })
       .limit(5)
     setRecentBookings(recent ?? [])
     setLoading(false)
@@ -201,7 +207,10 @@ export default function DashboardPage() {
                   <div>
                     <p className="font-medium">{b.customers?.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {b.customers?.plate} — {b.services?.name}
+                      {b.vehicles && `${b.vehicles.plate}${b.vehicles.brand ? ` - ${b.vehicles.brand}` : ""}${b.booking_services?.length ? " — " : ""}`}
+                      {b.booking_services?.length > 0
+                        ? b.booking_services.map((bs: any) => bs.services?.name).filter(Boolean).join(", ")
+                        : b.services?.name}
                     </p>
                   </div>
                   <div className="text-right">
