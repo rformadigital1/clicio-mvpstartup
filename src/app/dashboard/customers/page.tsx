@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import type { Customer } from "@/lib/types"
 
 export default function CustomersPage() {
   const supabase = createClient()
+  const { toast } = useToast()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -20,30 +22,31 @@ export default function CustomersPage() {
   }, [])
 
   async function loadCustomers() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { user }, error: userErr } = await supabase.auth.getUser()
+    if (userErr || !user) { toast({ title: "Error de autenticación", variant: "destructive" }); return }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileErr } = await supabase
       .from("profiles")
       .select("tenant_id")
       .eq("id", user.id)
       .single()
 
-    if (!profile) return
+    if (profileErr || !profile) { toast({ title: "Error al cargar perfil", description: profileErr?.message, variant: "destructive" }); return }
     setTenantId(profile.tenant_id)
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("customers")
       .select("*")
       .eq("tenant_id", profile.tenant_id)
       .order("created_at", { ascending: false })
 
+    if (error) toast({ title: "Error al cargar clientes", description: error.message, variant: "destructive" })
     setCustomers(data ?? [])
   }
 
   async function handleAddCustomer(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!tenantId) return
+    if (!tenantId) { toast({ title: "Error", description: "Tenant no encontrado", variant: "destructive" }); return }
 
     const form = new FormData(e.currentTarget)
     const { error } = await supabase.from("customers").insert({
@@ -54,10 +57,10 @@ export default function CustomersPage() {
       vehicle: form.get("vehicle") as string,
     })
 
-    if (!error) {
-      setDialogOpen(false)
-      loadCustomers()
-    }
+    if (error) { toast({ title: "Error al crear cliente", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Cliente creado" })
+    setDialogOpen(false)
+    loadCustomers()
   }
 
   return (

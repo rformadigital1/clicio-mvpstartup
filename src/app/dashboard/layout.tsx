@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ToastProvider } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 import { Calendar, Users, Car, Settings, LayoutDashboard, Gift, LogOut, Menu } from "lucide-react"
 import { useState } from "react"
 
@@ -26,6 +28,10 @@ const navItems = [
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return <ToastProvider><DashboardInner>{children}</DashboardInner><Toaster /></ToastProvider>
+}
+
+function DashboardInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()

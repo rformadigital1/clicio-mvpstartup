@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import { Trash2 } from "lucide-react"
 import type { Service } from "@/lib/types"
 
 export default function ServicesPage() {
   const supabase = createClient()
+  const { toast } = useToast()
   const [services, setServices] = useState<Service[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -21,30 +23,31 @@ export default function ServicesPage() {
   }, [])
 
   async function loadServices() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { user }, error: userErr } = await supabase.auth.getUser()
+    if (userErr || !user) { toast({ title: "Error de autenticación", variant: "destructive" }); return }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileErr } = await supabase
       .from("profiles")
       .select("tenant_id")
       .eq("id", user.id)
       .single()
 
-    if (!profile) return
+    if (profileErr || !profile) { toast({ title: "Error al cargar perfil", description: profileErr?.message, variant: "destructive" }); return }
     setTenantId(profile.tenant_id)
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("services")
       .select("*")
       .eq("tenant_id", profile.tenant_id)
       .order("created_at")
 
+    if (error) toast({ title: "Error al cargar servicios", description: error.message, variant: "destructive" })
     setServices(data ?? [])
   }
 
   async function handleAddService(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!tenantId) return
+    if (!tenantId) { toast({ title: "Error", description: "Tenant no encontrado", variant: "destructive" }); return }
 
     const form = new FormData(e.currentTarget)
     const { error } = await supabase.from("services").insert({
@@ -54,14 +57,16 @@ export default function ServicesPage() {
       duration: parseInt(form.get("duration") as string) || null,
     })
 
-    if (!error) {
-      setDialogOpen(false)
-      loadServices()
-    }
+    if (error) { toast({ title: "Error al crear servicio", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Servicio creado" })
+    setDialogOpen(false)
+    loadServices()
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("services").delete().eq("id", id)
+    const { error } = await supabase.from("services").delete().eq("id", id)
+    if (error) { toast({ title: "Error al eliminar", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Servicio eliminado" })
     loadServices()
   }
 

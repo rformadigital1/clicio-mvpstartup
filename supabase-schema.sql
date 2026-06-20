@@ -105,9 +105,13 @@ create policy "tenant_update" on tenants for update to authenticated using (
   id = (select tenant_id from profiles where id = auth.uid())
 );
 
--- RLS POLICIES FOR PROFILES
-create policy "profile_select" on profiles for select to authenticated using (
-  id = auth.uid() or tenant_id = (select tenant_id from profiles where id = auth.uid())
+-- RLS POLICIES FOR PROFILES (split to avoid circular reference)
+create policy "profile_select_own" on profiles for select to authenticated using (
+  id = auth.uid()
+);
+
+create policy "profile_select_tenant" on profiles for select to authenticated using (
+  tenant_id = (select tenant_id from profiles where id = auth.uid())
 );
 
 create policy "profile_insert" on profiles for insert to authenticated with check (id = auth.uid());
@@ -240,8 +244,86 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
 
--- Revoke public execute on trigger function
+-- Revoke public execute on trigger functions
 revoke execute on function handle_new_user from anon, authenticated;
+
+-- Function: Add stamp when booking delivered
+create or replace function handle_booking_delivered()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if new.status = 'delivered' and (old.status is null or old.status != 'delivered') then
+    insert into public.stamp_history (tenant_id, customer_id, booking_id)
+    values (new.tenant_id, new.customer_id, new.id);
+    update public.customers set stamps = stamps + 1
+    where id = new.customer_id;
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function handle_booking_delivered from anon, authenticated;
+
+drop trigger if exists on_booking_delivered on bookings;
+create trigger on_booking_delivered
+  after update on bookings
+  for each row execute function handle_booking_delivered();
+
+-- 8. REWARD NOTIFICATIONS
+create table if not exists reward_notifications (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id),
+  customer_id uuid not null references customers(id),
+  reward_id uuid not null references loyalty_rules(id),
+  notified bool default false,
+  created_at timestamptz default now()
+);
+
+alter table reward_notifications enable row level security;
+
+create policy "reward_notification_select" on reward_notifications for select to authenticated using (
+  tenant_id = (select tenant_id from profiles where id = auth.uid())
+);
+
+create policy "reward_notification_update" on reward_notifications for update to authenticated using (
+  tenant_id = (select tenant_id from profiles where id = auth.uid())
+) with check (
+  tenant_id = (select tenant_id from profiles where id = auth.uid())
+);
+
+create index if not exists idx_reward_notifications_tenant_id on reward_notifications(tenant_id);
+create index if not exists idx_reward_notifications_customer_id on reward_notifications(customer_id);
+
+-- Function: Check reward eligibility when stamps change
+create or replace function check_reward_eligibility()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  if new.stamps > old.stamps then
+    insert into public.reward_notifications (tenant_id, customer_id, reward_id)
+    select new.tenant_id, new.id, lr.id
+    from public.loyalty_rules lr
+    where lr.tenant_id = new.tenant_id
+      and new.stamps >= lr.required_stamps
+      and not exists (
+        select 1 from public.reward_notifications rn
+        where rn.customer_id = new.id and rn.reward_id = lr.id
+      );
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function check_reward_eligibility from anon, authenticated;
+
+drop trigger if exists on_customer_stamps_update on customers;
+create trigger on_customer_stamps_update
+  after update on customers
+  for each row execute function check_reward_eligibility();
 
 -- Additional FK indexes
 create index if not exists idx_bookings_customer_id on bookings(customer_id);

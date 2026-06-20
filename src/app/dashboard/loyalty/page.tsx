@@ -6,39 +6,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Trash2 } from "lucide-react"
-import type { LoyaltyRule } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { Trash2, Gift } from "lucide-react"
+import type { LoyaltyRule, Customer } from "@/lib/types"
 
 export default function LoyaltyPage() {
   const supabase = createClient()
+  const { toast } = useToast()
   const [rules, setRules] = useState<LoyaltyRule[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [claimDialogOpen, setClaimDialogOpen] = useState(false)
 
   useEffect(() => {
-    loadRules()
+    loadData()
   }, [])
 
-  async function loadRules() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+  async function loadData() {
+    const { data: { user }, error: userErr } = await supabase.auth.getUser()
+    if (userErr || !user) { toast({ title: "Error de autenticación", variant: "destructive" }); return }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileErr } = await supabase
       .from("profiles")
       .select("tenant_id")
       .eq("id", user.id)
       .single()
 
-    if (!profile) return
+    if (profileErr || !profile) { toast({ title: "Error", description: profileErr?.message, variant: "destructive" }); return }
     setTenantId(profile.tenant_id)
 
-    const { data } = await supabase
-      .from("loyalty_rules")
-      .select("*")
-      .eq("tenant_id", profile.tenant_id)
+    const [rRes, cRes] = await Promise.all([
+      supabase.from("loyalty_rules").select("*").eq("tenant_id", profile.tenant_id),
+      supabase.from("customers").select("*").eq("tenant_id", profile.tenant_id).order("name"),
+    ])
 
-    setRules(data ?? [])
+    if (rRes.error) toast({ title: "Error al cargar reglas", variant: "destructive" })
+    if (cRes.error) toast({ title: "Error al cargar clientes", variant: "destructive" })
+    setRules(rRes.data ?? [])
+    setCustomers(cRes.data ?? [])
   }
 
   async function handleAddRule(e: React.FormEvent<HTMLFormElement>) {
@@ -52,45 +60,117 @@ export default function LoyaltyPage() {
       reward_name: form.get("reward") as string,
     })
 
-    if (!error) {
-      setDialogOpen(false)
-      loadRules()
-    }
+    if (error) { toast({ title: "Error al crear regla", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Regla creada" })
+    setDialogOpen(false)
+    loadData()
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("loyalty_rules").delete().eq("id", id)
-    loadRules()
+    const { error } = await supabase.from("loyalty_rules").delete().eq("id", id)
+    if (error) { toast({ title: "Error al eliminar", description: error.message, variant: "destructive" }); return }
+    toast({ title: "Regla eliminada" })
+    loadData()
   }
+
+  async function handleClaimReward(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const form = new FormData(e.currentTarget)
+    const customerId = form.get("customer_id") as string
+    const ruleId = form.get("rule_id") as string
+
+    const rule = rules.find((r) => r.id === ruleId)
+    const customer = customers.find((c) => c.id === customerId)
+    if (!rule || !customer) { toast({ title: "Error", variant: "destructive" }); return }
+    if (customer.stamps < rule.required_stamps) { toast({ title: "El cliente no tiene suficientes sellos", variant: "destructive" }); return }
+
+    const { error } = await supabase
+      .from("customers")
+      .update({ stamps: customer.stamps - rule.required_stamps })
+      .eq("id", customerId)
+
+    if (error) { toast({ title: "Error al canjear", description: error.message, variant: "destructive" }); return }
+    toast({ title: `Premio canjeado: ${rule.reward_name}` })
+    setClaimDialogOpen(false)
+    loadData()
+  }
+
+  const eligibleCustomers = customers.filter((c) =>
+    rules.some((r) => c.stamps >= r.required_stamps)
+  )
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Fidelización</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Nueva Regla</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nueva Regla de Fidelización</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddRule} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="stamps">Sellos requeridos</Label>
-                <Input id="stamps" name="stamps" type="number" required defaultValue={5} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reward">Premio</Label>
-                <Input id="reward" name="reward" required placeholder="Ej: Lavado gratis" />
-              </div>
-              <Button type="submit" className="w-full">Guardar</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={claimDialogOpen} onOpenChange={setClaimDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" disabled={eligibleCustomers.length === 0}>
+                <Gift className="mr-1 h-4 w-4" /> Canjear Premio
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Canjear Premio</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleClaimReward} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customer_id">Cliente</Label>
+                  <Select name="customer_id" required>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
+                    <SelectContent>
+                      {customers.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name} - {c.stamps} sellos
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rule_id">Premio</Label>
+                  <Select name="rule_id" required>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar premio" /></SelectTrigger>
+                    <SelectContent>
+                      {rules.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.reward_name} ({r.required_stamps} sellos)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" className="w-full">Canjear</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Nueva Regla</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nueva Regla de Fidelización</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddRule} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stamps">Sellos requeridos</Label>
+                  <Input id="stamps" name="stamps" type="number" required defaultValue={5} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reward">Premio</Label>
+                  <Input id="reward" name="reward" required placeholder="Ej: Lavado gratis" />
+                </div>
+                <Button type="submit" className="w-full">Guardar</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 max-w-lg">
+      <div className="grid gap-4 md:grid-cols-2 max-w-lg mb-8">
         {rules.map((rule) => (
           <Card key={rule.id}>
             <CardHeader className="flex flex-row items-start justify-between">
@@ -109,19 +189,33 @@ export default function LoyaltyPage() {
         ))}
         {rules.length === 0 && (
           <div className="col-span-full text-center py-8">
-            <p className="text-muted-foreground">Sin reglas de fidelización configuradas</p>
+            <p className="text-muted-foreground">Sin reglas de fidelización</p>
             <p className="text-sm text-muted-foreground mt-1">Ej: 5 sellos = Lavado gratis</p>
           </div>
         )}
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">Cómo funciona</h2>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>1. Cada servicio completado suma 1 sello al cliente.</p>
-          <p>2. Cuando el cliente alcanza los sellos requeridos, canjea su premio.</p>
-          <p>3. Los sellos se reinician al canjear.</p>
-        </div>
+      <h2 className="text-lg font-semibold mb-4">Clientes con sellos</h2>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {customers.filter((c) => c.stamps > 0).map((c) => (
+          <Card key={c.id}>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="font-medium">{c.name}</p>
+                <p className="text-sm text-muted-foreground">{c.plate}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold">{c.stamps}</p>
+                <p className="text-xs text-muted-foreground">sellos</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {customers.filter((c) => c.stamps > 0).length === 0 && (
+          <p className="text-muted-foreground col-span-full text-center py-4">
+            Sin sellos entregados aún. Los sellos se asignan automáticamente al marcar una reserva como "Entregado".
+          </p>
+        )}
       </div>
     </div>
   )
