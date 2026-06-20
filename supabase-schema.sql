@@ -435,6 +435,7 @@ create policy "blocked_dates_insert" on blocked_dates for insert to authenticate
 create policy "blocked_dates_delete" on blocked_dates for delete to authenticated using (
   tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
+create policy "blocked_dates_public_select" on blocked_dates for select to anon using (true);
 
 create index if not exists idx_blocked_dates_tenant_id on blocked_dates(tenant_id);
 
