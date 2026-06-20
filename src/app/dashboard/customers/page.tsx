@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { useRole } from "@/app/dashboard/layout"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import { Trash2 } from "lucide-react"
 import type { Customer } from "@/lib/types"
@@ -15,6 +16,7 @@ import type { Customer } from "@/lib/types"
 export default function CustomersPage() {
   const supabase = createClient()
   const { toast } = useToast()
+  const roleInfo = useRole()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -113,9 +115,11 @@ export default function CustomersPage() {
           <Card key={customer.id}>
             <CardHeader className="flex flex-row items-start justify-between">
               <CardTitle className="text-base">{customer.name}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {roleInfo?.isOwner && (
+                <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
               {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}

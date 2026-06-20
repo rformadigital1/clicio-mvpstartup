@@ -83,3 +83,12 @@ export interface BlockedDate {
   date: string
   reason: string | null
 }
+
+export interface StaffInvitation {
+  id: string
+  tenant_id: string
+  code: string
+  used: boolean
+  created_at: string
+  expires_at: string
+}

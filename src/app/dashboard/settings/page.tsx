@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { StaffSection } from "./staff-section"
 import { Copy, Check, Plus, X } from "lucide-react"
 import type { Tenant, BusinessHour, BlockedDate } from "@/lib/types"
 
@@ -312,6 +313,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <StaffSection />
     </div>
   )
 }

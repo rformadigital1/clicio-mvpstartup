@@ -100,9 +100,9 @@ create policy "tenant_select" on tenants for select to authenticated using (
 );
 
 create policy "tenant_update" on tenants for update to authenticated using (
-  id = (select tenant_id from profiles where id = auth.uid())
+  id = public.get_user_tenant_id() and public.is_owner()
 ) with check (
-  id = (select tenant_id from profiles where id = auth.uid())
+  id = public.get_user_tenant_id() and public.is_owner()
 );
 
 -- RLS POLICIES FOR PROFILES (split to avoid circular reference)
@@ -133,6 +133,10 @@ create policy "customer_update" on customers for update to authenticated using (
   tenant_id = public.get_user_tenant_id()
 );
 
+create policy "customer_delete" on customers for delete to authenticated using (
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
+);
+
 -- RLS POLICIES FOR SERVICES
 create policy "service_select" on services for select to authenticated using (
   tenant_id = public.get_user_tenant_id()
@@ -149,7 +153,7 @@ create policy "service_update" on services for update to authenticated using (
 );
 
 create policy "service_delete" on services for delete to authenticated using (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 
 -- RLS POLICIES FOR BOOKINGS
@@ -173,17 +177,17 @@ create policy "loyalty_select" on loyalty_rules for select to authenticated usin
 );
 
 create policy "loyalty_insert" on loyalty_rules for insert to authenticated with check (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 
 create policy "loyalty_update" on loyalty_rules for update to authenticated using (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 ) with check (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 
 create policy "loyalty_delete" on loyalty_rules for delete to authenticated using (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 
 -- RLS POLICIES FOR STAMP HISTORY
@@ -229,6 +233,22 @@ $$;
 revoke execute on function public.get_user_tenant_id from anon, public;
 grant execute on function public.get_user_tenant_id to authenticated;
 
+-- Function: Check if current user is owner (for staff restrictions)
+create or replace function public.is_owner()
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'owner'
+  );
+$$;
+
+revoke execute on function public.is_owner from anon, public;
+grant execute on function public.is_owner to authenticated;
+
 -- Function: Create tenant on signup
 create or replace function handle_new_user()
 returns trigger
@@ -236,18 +256,42 @@ language plpgsql
 security definer set search_path = ''
 as $$
 declare
-  tenant_id uuid;
-  tenant_slug text;
+  v_tenant_id uuid;
+  v_tenant_slug text;
+  v_invite record;
 begin
-  tenant_slug := lower(regexp_replace(coalesce(new.raw_user_meta_data ->> 'taller_nombre', 'taller'), '[^a-z0-9]+', '-', 'g'));
-  tenant_slug := tenant_slug || '-' || substr(new.id::text, 1, 8);
+  -- Staff invite flow
+  if new.raw_user_meta_data ? 'invite_code' then
+    select * into v_invite from public.staff_invitations
+    where code = new.raw_user_meta_data ->> 'invite_code'
+      and used = false
+      and expires_at > now();
+
+    if found then
+      update public.staff_invitations set used = true where id = v_invite.id;
+      insert into public.profiles (id, tenant_id, email, role)
+      values (new.id, v_invite.tenant_id, new.email, 'staff');
+      return new;
+    end if;
+  end if;
+
+  -- Normal flow: create tenant + owner
+  v_tenant_slug := lower(regexp_replace(
+    coalesce(new.raw_user_meta_data ->> 'taller_nombre', 'taller'),
+    '[^a-z0-9]+', '-', 'g'
+  ));
+  v_tenant_slug := v_tenant_slug || '-' || substr(new.id::text, 1, 8);
 
   insert into public.tenants (name, slug, email)
-  values (coalesce(new.raw_user_meta_data ->> 'taller_nombre', 'Mi Taller'), tenant_slug, new.email)
-  returning id into tenant_id;
+  values (
+    coalesce(new.raw_user_meta_data ->> 'taller_nombre', 'Mi Taller'),
+    v_tenant_slug,
+    new.email
+  )
+  returning id into v_tenant_id;
 
   insert into public.profiles (id, tenant_id, email, role)
-  values (new.id, tenant_id, new.email, 'owner');
+  values (new.id, v_tenant_id, new.email, 'owner');
 
   return new;
 end;
@@ -357,15 +401,15 @@ create policy "business_hours_select" on business_hours for select to authentica
   tenant_id = public.get_user_tenant_id()
 );
 create policy "business_hours_insert" on business_hours for insert to authenticated with check (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 create policy "business_hours_update" on business_hours for update to authenticated using (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 ) with check (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 create policy "business_hours_delete" on business_hours for delete to authenticated using (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 create policy "business_hours_public_select" on business_hours for select to anon using (true);
 
@@ -386,13 +430,38 @@ create policy "blocked_dates_select" on blocked_dates for select to authenticate
   tenant_id = public.get_user_tenant_id()
 );
 create policy "blocked_dates_insert" on blocked_dates for insert to authenticated with check (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 create policy "blocked_dates_delete" on blocked_dates for delete to authenticated using (
-  tenant_id = public.get_user_tenant_id()
+  tenant_id = public.get_user_tenant_id() and public.is_owner()
 );
 
 create index if not exists idx_blocked_dates_tenant_id on blocked_dates(tenant_id);
+
+-- 11. STAFF INVITATIONS
+create table if not exists staff_invitations (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id) on delete cascade,
+  code text not null unique,
+  used boolean default false,
+  created_at timestamptz default now(),
+  expires_at timestamptz default now() + interval '7 days'
+);
+
+alter table staff_invitations enable row level security;
+
+create policy "staff_invitations_select" on staff_invitations for select to authenticated
+  using (tenant_id = public.get_user_tenant_id() and public.is_owner());
+create policy "staff_invitations_insert" on staff_invitations for insert to authenticated
+  with check (tenant_id = public.get_user_tenant_id() and public.is_owner());
+create policy "staff_invitations_update" on staff_invitations for update to authenticated
+  using (tenant_id = public.get_user_tenant_id() and public.is_owner())
+  with check (tenant_id = public.get_user_tenant_id() and public.is_owner());
+create policy "staff_invitations_delete" on staff_invitations for delete to authenticated
+  using (tenant_id = public.get_user_tenant_id() and public.is_owner());
+
+create index if not exists idx_staff_invitations_tenant_id on staff_invitations(tenant_id);
+create index if not exists idx_staff_invitations_code on staff_invitations(code);
 
 -- Additional FK indexes
 create index if not exists idx_bookings_customer_id on bookings(customer_id);
