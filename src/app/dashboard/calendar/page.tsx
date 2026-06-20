@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
 import { ChevronLeft, ChevronRight, Plus, Clock, User, Car } from "lucide-react"
-import type { Booking, BookingStatus, Customer, Service, Vehicle } from "@/lib/types"
+import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 const STATUS_COLORS: Record<BookingStatus, string> = {
@@ -36,8 +36,6 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
   delivered: "Entregado",
 }
 const HOUR_HEIGHT = 56
-const START_HOUR = 8
-const END_HOUR = 20
 
 function getWeekStart(d: Date): Date {
   const date = new Date(d)
@@ -67,6 +65,7 @@ export default function CalendarPage() {
   const [services, setServices] = useState<Service[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [bizHours, setBizHours] = useState<BusinessHour[]>([])
 
   // New booking modal
   const [newOpen, setNewOpen] = useState(false)
@@ -90,17 +89,20 @@ export default function CalendarPage() {
     if (!profile) return
     setTenantId(profile.tenant_id)
 
-    const [sRes, cRes, vRes] = await Promise.all([
+    const [sRes, cRes, vRes, hRes] = await Promise.all([
       supabase.from("services").select("*").eq("tenant_id", profile.tenant_id).order("name"),
       supabase.from("customers").select("*").eq("tenant_id", profile.tenant_id).order("name"),
       supabase.from("vehicles").select("*, customers(*)").eq("tenant_id", profile.tenant_id).order("plate"),
+      supabase.from("business_hours").select("*").eq("tenant_id", profile.tenant_id).order("day_of_week"),
     ])
     if (sRes.error) toast({ title: "Error", description: sRes.error.message, variant: "destructive" })
     if (cRes.error) toast({ title: "Error", description: cRes.error.message, variant: "destructive" })
     if (vRes.error) toast({ title: "Error", description: vRes.error.message, variant: "destructive" })
+    if (hRes.error) toast({ title: "Error", description: hRes.error.message, variant: "destructive" })
     setServices(sRes.data ?? [])
     setCustomers(cRes.data ?? [])
     setVehicles(vRes.data ?? [])
+    setBizHours(hRes.data ?? [])
   }
 
   async function loadWeek() {
@@ -129,9 +131,9 @@ export default function CalendarPage() {
   function getTopAndHeight(booking: any): { top: number; height: number } {
     const [h, m] = (booking.booking_time ?? "08:00").split(":").map(Number)
     const startMinutes = h * 60 + m
-    const totalMinutes = (END_HOUR - START_HOUR) * 60
+    const totalMinutes = (endHour - startHour) * 60
     const dur = Math.max(totalDuration(booking), 30)
-    const top = ((startMinutes - START_HOUR * 60) / totalMinutes) * 100
+    const top = ((startMinutes - startHour * 60) / totalMinutes) * 100
     const height = Math.min((dur / totalMinutes) * 100, 100 - top)
     return { top, height }
   }
@@ -144,7 +146,7 @@ export default function CalendarPage() {
     const [h, m] = (booking.booking_time ?? "08:00").split(":").map(Number)
     const startMinutes = h * 60 + m
     const dur = Math.max(totalDuration(booking), 30)
-    const topPx = ((startMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT
+    const topPx = ((startMinutes - startHour * 60) / 60) * HOUR_HEIGHT
     const heightPx = (dur / 60) * HOUR_HEIGHT
 
     return { col: dayIndex + 1, topPx, heightPx }
@@ -158,9 +160,23 @@ export default function CalendarPage() {
     })
   }, [weekStart])
 
+  const { startHour, endHour } = useMemo(() => {
+    const openDays = bizHours.filter(h => h.is_open)
+    if (openDays.length === 0) return { startHour: 8, endHour: 20 }
+    const mins = openDays.map(h => {
+      const [ho, mo] = h.open_time.split(":").map(Number)
+      return ho * 60 + mo
+    })
+    const maxMins = openDays.map(h => {
+      const [hc, mc] = h.close_time.split(":").map(Number)
+      return hc * 60 + mc
+    })
+    return { startHour: Math.min(...mins) / 60, endHour: Math.max(...maxMins) / 60 }
+  }, [bizHours])
+
   const hours = useMemo(() => {
-    return Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
-  }, [])
+    return Array.from({ length: endHour - startHour }, (_, i) => startHour + i)
+  }, [startHour, endHour])
 
   const todayStr = fmtDate(new Date())
 
@@ -240,15 +256,15 @@ export default function CalendarPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Calendario</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold">Calendario</h1>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" onClick={navPrev}><ChevronLeft className="h-4 w-4" /></Button>
             <Button variant="outline" size="sm" onClick={navToday}>Hoy</Button>
             <Button variant="outline" size="icon" onClick={navNext}><ChevronRight className="h-4 w-4" /></Button>
           </div>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs sm:text-sm text-muted-foreground w-full sm:w-auto">
             {days[0].toLocaleDateString("es-CL", { day: "numeric", month: "long" })} — {days[6].toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
           </span>
         </div>
@@ -285,9 +301,10 @@ export default function CalendarPage() {
               const ds = fmtDate(d)
               const isToday = ds === todayStr
               return (
-                <div key={i} className={`p-2 text-center text-xs font-medium border-l ${isToday ? "bg-primary/5" : ""}`}>
-                  <div>{DAY_LABELS[d.getDay()]}</div>
-                  <div className={`text-lg ${isToday ? "text-primary" : ""}`}>{d.getDate()}</div>
+                <div key={i} className={`p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium border-l ${isToday ? "bg-primary/5" : ""}`}>
+                  <div className="hidden sm:block">{DAY_LABELS[d.getDay()]}</div>
+                  <div className="sm:hidden">{DAY_LABELS[d.getDay()].slice(0, 2)}</div>
+                  <div className={`text-sm sm:text-lg ${isToday ? "text-primary" : ""}`}>{d.getDate()}</div>
                 </div>
               )
             })}
@@ -327,7 +344,8 @@ export default function CalendarPage() {
               return (
                 <div
                   key={booking.id}
-                  className="absolute left-0 right-0 mx-1 rounded px-2 py-1 text-xs overflow-hidden cursor-pointer border hover:opacity-80 transition-opacity z-20"
+                  className="absolute left-0 right-0 mx-1 rounded px-1 sm:px-2 py-1 text-[10px] sm:text-xs overflow-hidden cursor-pointer border hover:opacity-80 transition-opacity z-20"
+                  title={`${booking.booking_time?.slice(0, 5)} — ${booking.customers?.name}${serviceName ? ` (${serviceName})` : ""}`}
                   style={{
                     top: topPx,
                     height: Math.max(heightPx, 24),
@@ -339,11 +357,11 @@ export default function CalendarPage() {
                   }}
                   onClick={(e) => { e.stopPropagation(); setDetailBooking(booking); setDetailOpen(true) }}
                 >
-                  <div className="font-medium truncate">
-                    {booking.booking_time?.slice(0, 5)} — {booking.customers?.name}
+                  <div className="font-medium truncate leading-tight">
+                    {booking.booking_time?.slice(0, 5)} {booking.customers?.name}
                   </div>
                   {heightPx > 32 && (
-                    <div className="truncate opacity-75">{serviceName}</div>
+                    <div className="truncate opacity-75 leading-tight mt-0.5">{serviceName}</div>
                   )}
                 </div>
               )

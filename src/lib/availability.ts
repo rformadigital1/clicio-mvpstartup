@@ -12,7 +12,8 @@ export async function checkAvailability(
   serviceIds?: string[]
 ): Promise<AvailabilityResult> {
   const supabase = createClient()
-  const dayOfWeek = new Date(date + "T12:00:00").getDay()
+  const [yr, mo, dy] = date.split("-").map(Number)
+  const dayOfWeek = new Date(yr, mo - 1, dy).getDay()
 
   // Check if tenant has ANY hours configured
   const { count: totalHours } = await supabase
