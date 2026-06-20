@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Tenant, Service, BusinessHour } from "@/lib/types"
+import type { Tenant, Service, BusinessHour, Vehicle } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +23,12 @@ export default function TenantSitePage() {
   const [bookError, setBookError] = useState("")
   const [bookingOpen, setBookingOpen] = useState(false)
   const [bookingSuccess, setBookingSuccess] = useState(false)
+  const [existingCustomer, setExistingCustomer] = useState<any>(null)
+  const [customerVehicles, setCustomerVehicles] = useState<Vehicle[]>([])
+  const [selectedVehicleId, setSelectedVehicleId] = useState("new")
+  const [vehPlate, setVehPlate] = useState("")
+  const [vehBrand, setVehBrand] = useState("")
+  const [vehModel, setVehModel] = useState("")
 
   useEffect(() => {
     if (!slug) return
@@ -52,6 +58,41 @@ export default function TenantSitePage() {
     setLoading(false)
   }
 
+  async function handlePhoneBlur(phone: string) {
+    if (!tenant || phone.length < 6) return
+    const { data } = await supabase
+      .from("customers")
+      .select("*, vehicles(*)")
+      .eq("tenant_id", tenant.id)
+      .eq("phone", phone)
+      .maybeSingle()
+    if (data) {
+      setExistingCustomer(data)
+      setCustomerVehicles(data.vehicles || [])
+      if (data.vehicles?.length > 0) {
+        setSelectedVehicleId(data.vehicles[0].id)
+        setVehPlate("")
+      } else {
+        setSelectedVehicleId("new")
+      }
+    } else {
+      setExistingCustomer(null)
+      setCustomerVehicles([])
+      setSelectedVehicleId("new")
+    }
+  }
+
+  function resetBookingForm() {
+    setExistingCustomer(null)
+    setCustomerVehicles([])
+    setSelectedVehicleId("new")
+    setVehPlate("")
+    setVehBrand("")
+    setVehModel("")
+    setBookError("")
+    setBookingSuccess(false)
+  }
+
   async function handleBooking(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!tenant) return
@@ -62,32 +103,64 @@ export default function TenantSitePage() {
     const check = await checkAvailability(tenant.id, form.get("date") as string, form.get("time") as string)
     if (!check.available) { setBookError(check.reason ?? "Horario no disponible"); return }
 
-    const { data: customer, error: customerErr } = await supabase
-      .from("customers")
-      .insert({
-        tenant_id: tenant.id,
-        name: form.get("name") as string,
-        phone: form.get("phone") as string,
-        plate: form.get("plate") as string,
-      })
-      .select()
-      .single()
+    let customerId: string
+    let vehicleId: string | null = null
 
-    if (customerErr || !customer) {
-      setBookError("Error al crear cliente. Intenta de nuevo.")
-      return
+    if (existingCustomer) {
+      customerId = existingCustomer.id
+      if (selectedVehicleId === "new") {
+        const plate = vehPlate.trim().toUpperCase()
+        if (!plate) { setBookError("Ingresa la patente del vehículo"); return }
+        const { data: newV, error: vehErr } = await supabase.from("vehicles").insert({
+          tenant_id: tenant.id,
+          customer_id: customerId,
+          plate,
+          brand: vehBrand.trim() || null,
+          model: vehModel.trim() || null,
+        }).select().single()
+        if (vehErr || !newV) { setBookError("Error al crear vehículo"); return }
+        vehicleId = newV.id
+      } else {
+        vehicleId = selectedVehicleId
+      }
+    } else {
+      const { data: customer, error: customerErr } = await supabase
+        .from("customers")
+        .insert({
+          tenant_id: tenant.id,
+          name: form.get("name") as string,
+          phone: form.get("phone") as string,
+        })
+        .select()
+        .single()
+
+      if (customerErr || !customer) { setBookError("Error al crear cliente"); return }
+      customerId = customer.id
+
+      const plate = vehPlate.trim().toUpperCase()
+      if (!plate) { setBookError("Ingresa la patente del vehículo"); return }
+      const { data: newV, error: vehErr } = await supabase.from("vehicles").insert({
+        tenant_id: tenant.id,
+        customer_id: customerId,
+        plate,
+        brand: vehBrand.trim() || null,
+        model: vehModel.trim() || null,
+      }).select().single()
+      if (vehErr || !newV) { setBookError("Error al crear vehículo"); return }
+      vehicleId = newV.id
     }
 
-    const { error: bookingErr } = await supabase
-      .from("bookings")
-      .insert({
-        tenant_id: tenant.id,
-        customer_id: customer.id,
-        service_id: form.get("service") as string,
-        booking_date: form.get("date") as string,
-        booking_time: form.get("time") as string,
-        status: "reserved",
-      })
+    const payload: Record<string, any> = {
+      tenant_id: tenant.id,
+      customer_id: customerId,
+      vehicle_id: vehicleId,
+      service_id: form.get("service") as string,
+      booking_date: form.get("date") as string,
+      booking_time: form.get("time") as string,
+      status: "reserved",
+    }
+
+    const { error: bookingErr } = await supabase.from("bookings").insert(payload)
 
     if (bookingErr) {
       setBookError("Error al crear reserva. Intenta de nuevo.")
@@ -220,7 +293,7 @@ export default function TenantSitePage() {
         <div className="container">{tenant.name} - {tenant.phone && <span>{tenant.phone}</span>}</div>
       </footer>
 
-      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+      <Dialog open={bookingOpen} onOpenChange={(open) => { setBookingOpen(open); if (!open) resetBookingForm() }}>
         <DialogContent>
           {bookingSuccess ? (
             <div className="text-center py-8">
@@ -245,12 +318,36 @@ export default function TenantSitePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" name="phone" type="tel" required />
+                  <Input id="phone" name="phone" type="tel" required onBlur={(e) => handlePhoneBlur(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="plate">Patente</Label>
-                  <Input id="plate" name="plate" />
-                </div>
+                {existingCustomer && customerVehicles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Vehículo</Label>
+                    <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar vehículo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customerVehicles.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            {v.plate} {v.brand ? `- ${v.brand}` : ""} {v.model ?? ""}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="new">+ Agregar otro vehículo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(selectedVehicleId === "new" || !existingCustomer) && (
+                  <div className="space-y-2">
+                    <Label>Patente *</Label>
+                    <Input value={vehPlate} onChange={(e) => setVehPlate(e.target.value)} placeholder="Ej: ABC123" required />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input value={vehBrand} onChange={(e) => setVehBrand(e.target.value)} placeholder="Marca (opcional)" />
+                      <Input value={vehModel} onChange={(e) => setVehModel(e.target.value)} placeholder="Modelo (opcional)" />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="service">Servicio</Label>
                   <Select name="service" required>
