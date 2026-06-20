@@ -121,7 +121,11 @@ export default function TenantSitePage() {
     <div className="min-h-screen">
       <header className="border-b">
         <div className="container flex h-16 items-center">
-          <h1 className="text-xl font-bold">{tenant.name}</h1>
+          {tenant.logo_url ? (
+            <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-auto max-w-[160px] object-contain" />
+          ) : (
+            <h1 className="text-xl font-bold">{tenant.name}</h1>
+          )}
         </div>
       </header>
 

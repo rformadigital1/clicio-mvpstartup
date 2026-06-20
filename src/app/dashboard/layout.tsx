@@ -47,7 +47,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 function DashboardInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [roleInfo, setRoleInfo] = useState<RoleInfo | null>(null)
+  const [tenantLogo, setTenantLogo] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -60,16 +62,21 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, email")
+      .select("role, email, tenant_id")
       .eq("id", user.id)
       .single()
 
     if (profile) {
       setRoleInfo({ isOwner: profile.role === "owner", role: profile.role, email: profile.email })
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("logo_url")
+        .eq("id", profile.tenant_id)
+        .single()
+      if (tenant) setTenantLogo(tenant.logo_url)
     }
     setLoading(false)
   }
-
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push("/signin")
@@ -100,7 +107,13 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
             <button className="md:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-5 w-5" />
             </button>
-            <Link href="/dashboard" className="text-lg font-bold">CLICIO</Link>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              {tenantLogo ? (
+                <img src={tenantLogo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
+              ) : (
+                <span className="text-lg font-bold">CLICIO</span>
+              )}
+            </Link>
             <div className="ml-auto flex items-center gap-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

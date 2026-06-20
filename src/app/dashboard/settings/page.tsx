@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { StaffSection } from "./staff-section"
-import { Copy, Check, Plus, X } from "lucide-react"
+import { Copy, Check, Plus, X, Upload, Trash2 } from "lucide-react"
 import type { Tenant, BusinessHour, BlockedDate } from "@/lib/types"
 
 const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false)
   const [newSlug, setNewSlug] = useState("")
   const [blockDialogOpen, setBlockDialogOpen] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   useEffect(() => {
     setOrigin(window.location.origin)
@@ -142,6 +143,40 @@ export default function SettingsPage() {
     loadTenant()
   }
 
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!tenant || !e.target.files?.[0]) return
+    setUploadingLogo(true)
+    const file = e.target.files[0]
+    const ext = file.name.split(".").pop()
+    const filePath = `${tenant.id}/logo.${ext}`
+
+    const { error: uploadErr } = await supabase.storage.from("logos").upload(filePath, file, { upsert: true })
+    if (uploadErr) {
+      toast({ title: "Error al subir logo", description: uploadErr.message, variant: "destructive" })
+      setUploadingLogo(false)
+      return
+    }
+
+    const { data: urlData } = supabase.storage.from("logos").getPublicUrl(filePath)
+    const logoUrl = urlData.publicUrl
+
+    const { error: updateErr } = await supabase.from("tenants").update({ logo_url: logoUrl }).eq("id", tenant.id)
+    if (updateErr) {
+      toast({ title: "Error al guardar logo", description: updateErr.message, variant: "destructive" })
+    } else {
+      setTenant({ ...tenant, logo_url: logoUrl })
+      toast({ title: "Logo actualizado" })
+    }
+    setUploadingLogo(false)
+  }
+
+  async function handleRemoveLogo() {
+    if (!tenant || !tenant.logo_url) return
+    await supabase.from("tenants").update({ logo_url: null }).eq("id", tenant.id)
+    setTenant({ ...tenant, logo_url: null })
+    toast({ title: "Logo eliminado" })
+  }
+
   async function copyUrl() {
     if (!tenant) return
     const url = `${origin}/${tenant.slug}`
@@ -187,6 +222,33 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" name="email" type="email" defaultValue={tenant.email ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label>Logo del taller</Label>
+              <div className="flex items-center gap-4">
+                {tenant.logo_url ? (
+                  <>
+                    <img src={tenant.logo_url} alt="Logo" className="h-16 w-16 object-contain rounded border" />
+                    <Button type="button" variant="ghost" size="icon" onClick={handleRemoveLogo}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="h-16 w-16 rounded border border-dashed flex items-center justify-center text-muted-foreground text-xs">
+                    Sin logo
+                  </div>
+                )}
+                <div>
+                  <Button type="button" variant="outline" size="sm" disabled={uploadingLogo} asChild>
+                    <label className="cursor-pointer">
+                      <Upload className="h-4 w-4 mr-1" />
+                      {uploadingLogo ? "Subiendo..." : "Subir logo"}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
+                    </label>
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG o WebP. Máx 2MB.</p>
+                </div>
+              </div>
             </div>
             <Separator />
             <div className="space-y-2">
