@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users, Car, Gift, DollarSign, Clock, CheckCircle2, Wrench } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Calendar, Users, DollarSign, Clock, CheckCircle2, Wrench, CalendarDays } from "lucide-react"
 
 const statusLabels: Record<string, string> = {
   reserved: "Reservado",
@@ -172,6 +174,18 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">reservas para hoy</p>
           </CardContent>
         </Card>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/calendar" className="block h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Calendario</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm font-medium">Ver semana</p>
+              <p className="text-xs text-muted-foreground">Vista calendario</p>
+            </CardContent>
+          </Link>
+        </Card>
       </div>
 
       {/* Today's status breakdown */}
@@ -192,7 +206,7 @@ export default function DashboardPage() {
       {/* Recent bookings */}
       <Card>
         <CardHeader>
-          <CardTitle>Últimas reservas</CardTitle>
+          <CardTitle>Próximas reservas</CardTitle>
         </CardHeader>
         <CardContent>
           {recentBookings.length === 0 ? (
