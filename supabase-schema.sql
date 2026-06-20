@@ -49,7 +49,7 @@ create table if not exists bookings (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references tenants(id),
   customer_id uuid not null references customers(id),
-  service_id uuid not null references services(id),
+  service_id uuid references services(id),
   booking_date date not null,
   booking_time time not null,
   status text not null default 'reserved' check (status in ('reserved', 'waiting', 'in_progress', 'ready', 'delivered')),
@@ -483,6 +483,7 @@ alter table bookings add column if not exists vehicle_id uuid references vehicle
 alter table vehicles enable row level security;
 
 create policy "vehicles_anon_insert" on vehicles for insert to anon with check (true);
+create policy "vehicles_anon_select" on vehicles for select to anon using (true);
 create policy "vehicles_authenticated_select" on vehicles for select to authenticated
   using (tenant_id = public.get_user_tenant_id());
 create policy "vehicles_authenticated_insert" on vehicles for insert to authenticated
@@ -504,3 +505,23 @@ create index if not exists idx_bookings_service_id on bookings(service_id);
 create index if not exists idx_loyalty_rules_tenant_id on loyalty_rules(tenant_id);
 create index if not exists idx_stamp_history_booking_id on stamp_history(booking_id);
 create index if not exists idx_stamp_history_customer_id on stamp_history(customer_id);
+
+-- 13. BOOKING SERVICES (junction table for multi-service bookings)
+create table if not exists booking_services (
+  id uuid primary key default gen_random_uuid(),
+  booking_id uuid not null references bookings(id) on delete cascade,
+  service_id uuid not null references services(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique(booking_id, service_id)
+);
+
+alter table booking_services enable row level security;
+
+create policy "booking_services_anon_insert" on booking_services for insert to anon with check (true);
+create policy "booking_services_authenticated_select" on booking_services for select to authenticated
+  using (booking_id in (select id from bookings where tenant_id = public.get_user_tenant_id()));
+create policy "booking_services_authenticated_insert" on booking_services for insert to authenticated
+  with check (booking_id in (select id from bookings where tenant_id = public.get_user_tenant_id()));
+
+create index if not exists idx_booking_services_booking_id on booking_services(booking_id);
+create index if not exists idx_booking_services_service_id on booking_services(service_id);

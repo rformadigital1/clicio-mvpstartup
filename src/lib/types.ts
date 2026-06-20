@@ -17,6 +17,13 @@ export interface Profile {
   created_at: string
 }
 
+export interface BookingService {
+  id: string
+  booking_id: string
+  service_id: string
+  services?: Service
+}
+
 export interface Vehicle {
   id: string
   tenant_id: string
@@ -53,7 +60,7 @@ export interface Booking {
   id: string
   tenant_id: string
   customer_id: string
-  service_id: string
+  service_id?: string
   vehicle_id?: string
   booking_date: string
   booking_time: string
@@ -62,6 +69,7 @@ export interface Booking {
   customers?: Customer
   services?: Service
   vehicles?: Vehicle
+  booking_services?: BookingService[]
 }
 
 export type BookingStatus = "reserved" | "waiting" | "in_progress" | "ready" | "delivered"

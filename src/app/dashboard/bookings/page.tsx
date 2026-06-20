@@ -41,6 +41,7 @@ export default function BookingsPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [newBookingCustomerId, setNewBookingCustomerId] = useState("")
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
 
   // Filters
   const [search, setSearch] = useState("")
@@ -63,7 +64,7 @@ export default function BookingsPage() {
     setTenantId(profile.tenant_id)
 
     const [bRes, cRes, sRes, vRes] = await Promise.all([
-      supabase.from("bookings").select("*, customers(*), services(*), vehicles(*)").eq("tenant_id", profile.tenant_id).order("booking_date", { ascending: false }).order("booking_time"),
+      supabase.from("bookings").select("*, customers(*), services(*), vehicles(*), booking_services(service_id, services(*))").eq("tenant_id", profile.tenant_id).order("booking_date", { ascending: false }).order("booking_time"),
       supabase.from("customers").select("*").eq("tenant_id", profile.tenant_id).order("name"),
       supabase.from("services").select("*").eq("tenant_id", profile.tenant_id).order("name"),
       supabase.from("vehicles").select("*, customers(*)").eq("tenant_id", profile.tenant_id).order("plate"),
@@ -92,26 +93,34 @@ export default function BookingsPage() {
 
     const form = new FormData(e.currentTarget)
 
-    const check = await checkAvailability(tenantId, form.get("booking_date") as string, form.get("booking_time") as string)
+    if (selectedServiceIds.length === 0) { toast({ title: "Selecciona al menos un servicio", variant: "destructive" }); return }
+
+    const check = await checkAvailability(tenantId, form.get("booking_date") as string, form.get("booking_time") as string, selectedServiceIds)
     if (!check.available) { toast({ title: "Horario no disponible", description: check.reason, variant: "destructive" }); return }
 
     const vehId = form.get("vehicle_id") as string
     const payload: Record<string, any> = {
       tenant_id: tenantId,
       customer_id: form.get("customer_id") as string,
-      service_id: form.get("service_id") as string,
       booking_date: form.get("booking_date") as string,
       booking_time: form.get("booking_time") as string,
       status: "reserved",
     }
     if (vehId && vehId !== "__none__") payload.vehicle_id = vehId
 
-    const { error } = await supabase.from("bookings").insert(payload)
+    const { data: newBooking, error } = await supabase.from("bookings").insert(payload).select().single()
 
-    if (error) { toast({ title: "Error al crear reserva", description: error.message, variant: "destructive" }); return }
+    if (error || !newBooking) { toast({ title: "Error al crear reserva", description: error?.message, variant: "destructive" }); return }
+
+    const { error: bsErr } = await supabase.from("booking_services").insert(
+      selectedServiceIds.map(sid => ({ booking_id: newBooking.id, service_id: sid }))
+    )
+    if (bsErr) { toast({ title: "Error al guardar servicios", description: bsErr.message, variant: "destructive" }); return }
+
     toast({ title: "Reserva creada" })
     setDialogOpen(false)
     setNewBookingCustomerId("")
+    setSelectedServiceIds([])
     loadData()
   }
 
@@ -139,7 +148,7 @@ export default function BookingsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Agenda</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) setSelectedServiceIds([]) }}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-1 h-4 w-4" /> Nueva Reserva</Button>
           </DialogTrigger>
@@ -174,15 +183,22 @@ export default function BookingsPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="service_id">Servicio</Label>
-                <Select name="service_id" required>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar servicio" /></SelectTrigger>
-                  <SelectContent>
-                    {services.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Servicios</Label>
+                <div className="space-y-1 max-h-48 overflow-y-auto border rounded-lg p-2">
+                  {services.map((s) => (
+                    <label key={s.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedServiceIds.includes(s.id)}
+                        onChange={() => setSelectedServiceIds(prev =>
+                          prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id]
+                        )}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm font-medium">{s.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -282,7 +298,10 @@ export default function BookingsPage() {
                       booking.customers.plate
                     ) : null}
                     {booking.vehicles?.brand && <span> - {booking.vehicles.brand}</span>}
-                    {booking.services?.name && <span> — {booking.services.name}</span>}
+                    {(booking as any).booking_services?.length > 0
+                      ? <span> — {(booking as any).booking_services.map((bs: any) => bs.services?.name).filter(Boolean).join(", ")}</span>
+                      : booking.services?.name && <span> — {booking.services.name}</span>
+                    }
                   </p>
                 </div>
                 <Badge className={statusColors[booking.status as BookingStatus]}>

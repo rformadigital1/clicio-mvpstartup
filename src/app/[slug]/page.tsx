@@ -29,6 +29,23 @@ export default function TenantSitePage() {
   const [vehPlate, setVehPlate] = useState("")
   const [vehBrand, setVehBrand] = useState("")
   const [vehModel, setVehModel] = useState("")
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
+  const [totalPrice, setTotalPrice] = useState(0)
+  const [totalDuration, setTotalDuration] = useState(0)
+
+  function toggleService(s: Service) {
+    setSelectedServiceIds(prev => {
+      if (prev.includes(s.id)) {
+        setTotalPrice(p => p - (s.price ?? 0))
+        setTotalDuration(d => d - (s.duration ?? 0))
+        return prev.filter(id => id !== s.id)
+      } else {
+        setTotalPrice(p => p + (s.price ?? 0))
+        setTotalDuration(d => d + (s.duration ?? 0))
+        return [...prev, s.id]
+      }
+    })
+  }
 
   useEffect(() => {
     if (!slug) return
@@ -89,6 +106,9 @@ export default function TenantSitePage() {
     setVehPlate("")
     setVehBrand("")
     setVehModel("")
+    setSelectedServiceIds([])
+    setTotalPrice(0)
+    setTotalDuration(0)
     setBookError("")
     setBookingSuccess(false)
   }
@@ -100,7 +120,9 @@ export default function TenantSitePage() {
 
     const form = new FormData(e.currentTarget)
 
-    const check = await checkAvailability(tenant.id, form.get("date") as string, form.get("time") as string)
+    if (selectedServiceIds.length === 0) { setBookError("Selecciona al menos un servicio"); return }
+
+    const check = await checkAvailability(tenant.id, form.get("date") as string, form.get("time") as string, selectedServiceIds)
     if (!check.available) { setBookError(check.reason ?? "Horario no disponible"); return }
 
     let customerId: string
@@ -154,16 +176,28 @@ export default function TenantSitePage() {
       tenant_id: tenant.id,
       customer_id: customerId,
       vehicle_id: vehicleId,
-      service_id: form.get("service") as string,
       booking_date: form.get("date") as string,
       booking_time: form.get("time") as string,
       status: "reserved",
     }
 
-    const { error: bookingErr } = await supabase.from("bookings").insert(payload)
+    const { data: newBooking, error: bookingErr } = await supabase
+      .from("bookings")
+      .insert(payload)
+      .select()
+      .single()
 
-    if (bookingErr) {
+    if (bookingErr || !newBooking) {
       setBookError("Error al crear reserva. Intenta de nuevo.")
+      return
+    }
+
+    // Insert booking_services
+    const { error: bsErr } = await supabase.from("booking_services").insert(
+      selectedServiceIds.map(sid => ({ booking_id: newBooking.id, service_id: sid }))
+    )
+    if (bsErr) {
+      setBookError("Error al guardar servicios. Intenta de nuevo.")
       return
     }
 
@@ -349,19 +383,30 @@ export default function TenantSitePage() {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="service">Servicio</Label>
-                  <Select name="service" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar servicio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {services.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name} {s.price ? `- $${s.price.toLocaleString("es-CL")}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Servicios</Label>
+                  <div className="space-y-1 max-h-60 overflow-y-auto border rounded-lg p-2">
+                    {services.map((s) => (
+                      <label key={s.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedServiceIds.includes(s.id)}
+                          onChange={() => toggleService(s)}
+                          className="h-4 w-4"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium">{s.name}</span>
+                          {s.duration && <span className="text-xs text-muted-foreground ml-2">{s.duration} min</span>}
+                        </div>
+                        {s.price && <span className="text-sm font-medium whitespace-nowrap">${s.price.toLocaleString("es-CL")}</span>}
+                      </label>
+                    ))}
+                  </div>
+                  {selectedServiceIds.length > 0 && (
+                    <div className="flex justify-between text-sm font-medium pt-1 border-t text-muted-foreground">
+                      <span>{totalDuration > 0 && `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}min`}</span>
+                      <span>Total: ${totalPrice.toLocaleString("es-CL")}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date">Fecha</Label>
