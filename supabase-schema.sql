@@ -464,6 +464,40 @@ create policy "staff_invitations_delete" on staff_invitations for delete to auth
 create index if not exists idx_staff_invitations_tenant_id on staff_invitations(tenant_id);
 create index if not exists idx_staff_invitations_code on staff_invitations(code);
 
+-- 12. VEHICLES
+create table if not exists vehicles (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id) on delete cascade,
+  customer_id uuid not null references customers(id) on delete cascade,
+  plate text not null,
+  brand text,
+  model text,
+  year integer,
+  vin text,
+  created_at timestamptz not null default now()
+);
+
+-- Add vehicle_id to bookings (nullable for backwards compat)
+alter table bookings add column if not exists vehicle_id uuid references vehicles(id) on delete set null;
+
+alter table vehicles enable row level security;
+
+create policy "vehicles_anon_insert" on vehicles for insert to anon with check (true);
+create policy "vehicles_authenticated_select" on vehicles for select to authenticated
+  using (tenant_id = public.get_user_tenant_id());
+create policy "vehicles_authenticated_insert" on vehicles for insert to authenticated
+  with check (tenant_id = public.get_user_tenant_id());
+create policy "vehicles_authenticated_update" on vehicles for update to authenticated
+  using (tenant_id = public.get_user_tenant_id())
+  with check (tenant_id = public.get_user_tenant_id());
+create policy "vehicles_owner_delete" on vehicles for delete to authenticated
+  using (tenant_id = public.get_user_tenant_id() and public.is_owner());
+
+create index if not exists idx_vehicles_tenant_id on vehicles(tenant_id);
+create index if not exists idx_vehicles_customer_id on vehicles(customer_id);
+create index if not exists idx_vehicles_plate on vehicles(plate);
+create index if not exists idx_bookings_vehicle_id on bookings(vehicle_id);
+
 -- Additional FK indexes
 create index if not exists idx_bookings_customer_id on bookings(customer_id);
 create index if not exists idx_bookings_service_id on bookings(service_id);
