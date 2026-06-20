@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
 import { Plus, Search, Calendar as CalendarIcon } from "lucide-react"
-import type { Booking, BookingStatus, Customer, Service } from "@/lib/types"
+import type { Booking, BookingStatus, Customer, Service, Vehicle } from "@/lib/types"
+import Link from "next/link"
 
 const statusColors: Record<BookingStatus, string> = {
   reserved: "bg-blue-100 text-blue-800",
@@ -36,8 +37,10 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [services, setServices] = useState<Service[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [newBookingCustomerId, setNewBookingCustomerId] = useState("")
 
   // Filters
   const [search, setSearch] = useState("")
@@ -59,19 +62,22 @@ export default function BookingsPage() {
     if (profileErr || !profile) { toast({ title: "Error al cargar perfil", description: profileErr?.message, variant: "destructive" }); return }
     setTenantId(profile.tenant_id)
 
-    const [bRes, cRes, sRes] = await Promise.all([
-      supabase.from("bookings").select("*, customers(*), services(*)").eq("tenant_id", profile.tenant_id).order("booking_date", { ascending: false }).order("booking_time"),
+    const [bRes, cRes, sRes, vRes] = await Promise.all([
+      supabase.from("bookings").select("*, customers(*), services(*), vehicles(*)").eq("tenant_id", profile.tenant_id).order("booking_date", { ascending: false }).order("booking_time"),
       supabase.from("customers").select("*").eq("tenant_id", profile.tenant_id).order("name"),
       supabase.from("services").select("*").eq("tenant_id", profile.tenant_id).order("name"),
+      supabase.from("vehicles").select("*, customers(*)").eq("tenant_id", profile.tenant_id).order("plate"),
     ])
 
     if (bRes.error) toast({ title: "Error al cargar reservas", description: bRes.error.message, variant: "destructive" })
     if (cRes.error) toast({ title: "Error al cargar clientes", description: cRes.error.message, variant: "destructive" })
     if (sRes.error) toast({ title: "Error al cargar servicios", description: sRes.error.message, variant: "destructive" })
+    if (vRes.error) toast({ title: "Error al cargar vehículos", description: vRes.error.message, variant: "destructive" })
 
     setBookings(bRes.data ?? [])
     setCustomers(cRes.data ?? [])
     setServices(sRes.data ?? [])
+    setVehicles(vRes.data ?? [])
   }
 
   async function updateStatus(bookingId: string, status: BookingStatus) {
@@ -89,29 +95,35 @@ export default function BookingsPage() {
     const check = await checkAvailability(tenantId, form.get("booking_date") as string, form.get("booking_time") as string)
     if (!check.available) { toast({ title: "Horario no disponible", description: check.reason, variant: "destructive" }); return }
 
-    const { error } = await supabase.from("bookings").insert({
+    const vehId = form.get("vehicle_id") as string
+    const payload: Record<string, any> = {
       tenant_id: tenantId,
       customer_id: form.get("customer_id") as string,
       service_id: form.get("service_id") as string,
       booking_date: form.get("booking_date") as string,
       booking_time: form.get("booking_time") as string,
       status: "reserved",
-    })
+    }
+    if (vehId && vehId !== "__none__") payload.vehicle_id = vehId
+
+    const { error } = await supabase.from("bookings").insert(payload)
 
     if (error) { toast({ title: "Error al crear reserva", description: error.message, variant: "destructive" }); return }
     toast({ title: "Reserva creada" })
     setDialogOpen(false)
+    setNewBookingCustomerId("")
     loadData()
   }
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
-      // Search by customer name or plate
+      // Search by customer name, plate, or vehicle plate
       if (search) {
         const q = search.toLowerCase()
         const name = b.customers?.name?.toLowerCase() ?? ""
-        const plate = b.customers?.plate?.toLowerCase() ?? ""
-        if (!name.includes(q) && !plate.includes(q)) return false
+        const custPlate = b.customers?.plate?.toLowerCase() ?? ""
+        const vehPlate = b.vehicles?.plate?.toLowerCase() ?? ""
+        if (!name.includes(q) && !custPlate.includes(q) && !vehPlate.includes(q)) return false
       }
       // Status filter
       if (filterStatus !== "all" && b.status !== filterStatus) return false
@@ -136,15 +148,31 @@ export default function BookingsPage() {
             <form onSubmit={handleAddBooking} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="customer_id">Cliente</Label>
-                <Select name="customer_id" required>
+                <Select name="customer_id" required value={newBookingCustomerId} onValueChange={setNewBookingCustomerId}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
                   <SelectContent>
                     {customers.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name} {c.plate ? `- ${c.plate}` : ""}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{c.name} {c.phone ? `- ${c.phone}` : ""}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              {newBookingCustomerId && (
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle_id">Vehículo</Label>
+                  <Select name="vehicle_id">
+                    <SelectTrigger><SelectValue placeholder="Sin vehículo (opcional)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin vehículo</SelectItem>
+                      {vehicles.filter(v => v.customer_id === newBookingCustomerId).map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.plate} {v.brand ? `- ${v.brand}` : ""} {v.model ?? ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="service_id">Servicio</Label>
                 <Select name="service_id" required>
@@ -245,7 +273,17 @@ export default function BookingsPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">{booking.customers?.name}</p>
-                  <p className="text-sm text-muted-foreground">{booking.customers?.plate} — {booking.services?.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {booking.vehicles ? (
+                      <Link href={`/dashboard/vehicles/${booking.vehicles.id}`} className="hover:underline">
+                        {booking.vehicles.plate}
+                      </Link>
+                    ) : booking.customers?.plate ? (
+                      booking.customers.plate
+                    ) : null}
+                    {booking.vehicles?.brand && <span> - {booking.vehicles.brand}</span>}
+                    {booking.services?.name && <span> — {booking.services.name}</span>}
+                  </p>
                 </div>
                 <Badge className={statusColors[booking.status as BookingStatus]}>
                   {statusLabels[booking.status as BookingStatus]}
