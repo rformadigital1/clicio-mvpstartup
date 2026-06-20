@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +25,7 @@ const statusColors: Record<string, string> = {
 
 export default function DashboardPage() {
   const supabase = createClient()
+  const router = useRouter()
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [todayCounts, setTodayCounts] = useState<Record<string, number>>({})
   const [monthRevenue, setMonthRevenue] = useState(0)
@@ -40,13 +42,26 @@ export default function DashboardPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("tenant_id")
+      .select("tenant_id, role")
       .eq("id", user.id)
       .single()
     if (!profile) return
 
     setTenantId(profile.tenant_id)
     const tid = profile.tenant_id
+
+    // Redirect owner to onboarding if no services configured
+    if (profile.role === "owner") {
+      const { count: svcCount } = await supabase
+        .from("services")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tid)
+
+      if (svcCount === 0) {
+        router.replace("/onboarding")
+        return
+      }
+    }
     const today = new Date().toISOString().slice(0, 10)
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
