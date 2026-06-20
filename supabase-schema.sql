@@ -111,7 +111,7 @@ create policy "profile_select_own" on profiles for select to authenticated using
 );
 
 create policy "profile_select_tenant" on profiles for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "profile_insert" on profiles for insert to authenticated with check (id = auth.uid());
@@ -120,79 +120,79 @@ create policy "profile_update" on profiles for update to authenticated using (id
 
 -- RLS POLICIES FOR CUSTOMERS
 create policy "customer_select" on customers for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "customer_insert" on customers for insert to authenticated with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "customer_update" on customers for update to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 ) with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 -- RLS POLICIES FOR SERVICES
 create policy "service_select" on services for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "service_insert" on services for insert to authenticated with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "service_update" on services for update to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 ) with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "service_delete" on services for delete to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 -- RLS POLICIES FOR BOOKINGS
 create policy "booking_select" on bookings for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "booking_insert" on bookings for insert to authenticated with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "booking_update" on bookings for update to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 ) with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 -- RLS POLICIES FOR LOYALTY
 create policy "loyalty_select" on loyalty_rules for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "loyalty_insert" on loyalty_rules for insert to authenticated with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "loyalty_update" on loyalty_rules for update to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 ) with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "loyalty_delete" on loyalty_rules for delete to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 -- RLS POLICIES FOR STAMP HISTORY
 create policy "stamp_select" on stamp_history for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "stamp_insert" on stamp_history for insert to authenticated with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 -- PUBLIC ACCESS: tenant public site
@@ -213,6 +213,19 @@ as $$
   from tenants
   where tenants.slug = slug;
 $$;
+
+-- Function: Get tenant_id for current user (bypasses RLS to avoid infinite recursion)
+create or replace function public.get_user_tenant_id()
+returns uuid
+language sql
+security definer
+stable
+as $$
+  select tenant_id from public.profiles where id = auth.uid()
+$$;
+
+revoke execute on function public.get_user_tenant_id from anon, public;
+grant execute on function public.get_user_tenant_id to authenticated;
 
 -- Function: Create tenant on signup
 create or replace function handle_new_user()
@@ -284,13 +297,13 @@ create table if not exists reward_notifications (
 alter table reward_notifications enable row level security;
 
 create policy "reward_notification_select" on reward_notifications for select to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create policy "reward_notification_update" on reward_notifications for update to authenticated using (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 ) with check (
-  tenant_id = (select tenant_id from profiles where id = auth.uid())
+  tenant_id = public.get_user_tenant_id()
 );
 
 create index if not exists idx_reward_notifications_tenant_id on reward_notifications(tenant_id);
