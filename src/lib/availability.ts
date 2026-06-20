@@ -9,7 +9,8 @@ export async function checkAvailability(
   tenantId: string,
   date: string,
   time: string,
-  serviceIds?: string[]
+  serviceIds?: string[],
+  excludeBookingId?: string
 ): Promise<AvailabilityResult> {
   const supabase = createClient()
   const [yr, mo, dy] = date.split("-").map(Number)
@@ -81,7 +82,7 @@ export async function checkAvailability(
   // Get existing bookings for the day with their services
   const { data: existingBookings } = await supabase
     .from("bookings")
-    .select("booking_time, booking_services(service_id)")
+    .select("id, booking_time, booking_services(service_id)")
     .eq("tenant_id", tenantId)
     .eq("booking_date", date)
     .neq("status", "cancelled")
@@ -109,6 +110,7 @@ export async function checkAvailability(
 
   for (const booking of existingBookings) {
     if (!booking.booking_time) continue
+    if (excludeBookingId && booking.id === excludeBookingId) continue
     const [bh, bm] = booking.booking_time.slice(0, 5).split(":").map(Number)
     const bStart = bh * 60 + bm
     let bDuration = 0

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { Plus, Search, Calendar as CalendarIcon } from "lucide-react"
+import { Plus, Search, Calendar as CalendarIcon, Pencil } from "lucide-react"
 import type { Booking, BookingStatus, Customer, Service, Vehicle } from "@/lib/types"
 import Link from "next/link"
 
@@ -40,8 +40,16 @@ export default function BookingsPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [newBookingCustomerId, setNewBookingCustomerId] = useState("")
+  const [customerQuery, setCustomerQuery] = useState("")
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
+  const [creatingCustomer, setCreatingCustomer] = useState(false)
+  const [newCustomerName, setNewCustomerName] = useState("")
+  const [newCustomerPhone, setNewCustomerPhone] = useState("")
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
+  const [editServiceIds, setEditServiceIds] = useState<string[]>([])
 
   // Filters
   const [search, setSearch] = useState("")
@@ -87,6 +95,51 @@ export default function BookingsPage() {
     loadData()
   }
 
+  async function handleEditBooking(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!editingBooking || !tenantId) return
+
+    if (editServiceIds.length === 0) { toast({ title: "Selecciona al menos un servicio", variant: "destructive" }); return }
+
+    const form = new FormData(e.currentTarget)
+
+    const check = await checkAvailability(tenantId, form.get("booking_date") as string, form.get("booking_time") as string, editServiceIds, editingBooking.id)
+    if (!check.available) { toast({ title: "Horario no disponible", description: check.reason, variant: "destructive" }); return }
+
+    const vehId = form.get("vehicle_id") as string
+    const payload: Record<string, any> = {
+      customer_id: form.get("customer_id") as string,
+      booking_date: form.get("booking_date") as string,
+      booking_time: form.get("booking_time") as string,
+    }
+    if (vehId && vehId !== "__none__") payload.vehicle_id = vehId
+    else payload.vehicle_id = null
+
+    const { error } = await supabase.from("bookings").update(payload).eq("id", editingBooking.id)
+    if (error) { toast({ title: "Error al actualizar", description: error.message, variant: "destructive" }); return }
+
+    const { error: delErr } = await supabase.from("booking_services").delete().eq("booking_id", editingBooking.id)
+    if (delErr) { toast({ title: "Error al actualizar servicios", description: delErr.message, variant: "destructive" }); return }
+
+    const { error: insErr } = await supabase.from("booking_services").insert(
+      editServiceIds.map(sid => ({ booking_id: editingBooking.id, service_id: sid }))
+    )
+    if (insErr) { toast({ title: "Error al guardar servicios", description: insErr.message, variant: "destructive" }); return }
+
+    toast({ title: "Reserva actualizada" })
+    setEditDialogOpen(false)
+    setEditingBooking(null)
+    setEditServiceIds([])
+    loadData()
+  }
+
+  function openEdit(booking: Booking) {
+    setEditingBooking(booking)
+    const svcIds: string[] = (booking as any).booking_services?.map((bs: any) => bs.service_id) ?? []
+    setEditServiceIds(svcIds)
+    setEditDialogOpen(true)
+  }
+
   async function handleAddBooking(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!tenantId) { toast({ title: "Error", description: "Tenant no encontrado", variant: "destructive" }); return }
@@ -120,6 +173,10 @@ export default function BookingsPage() {
     toast({ title: "Reserva creada" })
     setDialogOpen(false)
     setNewBookingCustomerId("")
+    setCustomerQuery("")
+    setCreatingCustomer(false)
+    setNewCustomerName("")
+    setNewCustomerPhone("")
     setSelectedServiceIds([])
     loadData()
   }
@@ -156,15 +213,93 @@ export default function BookingsPage() {
             <DialogHeader><DialogTitle>Nueva Reserva</DialogTitle></DialogHeader>
             <form onSubmit={handleAddBooking} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="customer_id">Cliente</Label>
-                <Select name="customer_id" required value={newBookingCustomerId} onValueChange={setNewBookingCustomerId}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
-                  <SelectContent>
-                    {customers.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name} {c.phone ? `- ${c.phone}` : ""}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="customer_search">Cliente</Label>
+                {newBookingCustomerId && !creatingCustomer ? (
+                  <div className="flex items-center gap-2">
+                    <Input value={customers.find(c => c.id === newBookingCustomerId)?.name ?? ""} disabled />
+                    <Button type="button" variant="ghost" size="sm" onClick={() => { setNewBookingCustomerId(""); setCustomerQuery(""); setCreatingCustomer(false) }}>
+                      Cambiar
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      id="customer_search"
+                      placeholder="Buscar cliente por nombre o teléfono..."
+                      value={customerQuery}
+                      onChange={(e) => { setCustomerQuery(e.target.value); setShowCustomerDropdown(true); setCreatingCustomer(false) }}
+                      onFocus={() => setShowCustomerDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                    />
+                    {showCustomerDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {customers
+                          .filter(c => {
+                            if (!customerQuery) return true
+                            const q = customerQuery.toLowerCase()
+                            return c.name.toLowerCase().includes(q) || (c.phone ?? "").toLowerCase().includes(q)
+                          })
+                          .map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent"
+                              onMouseDown={() => { setNewBookingCustomerId(c.id); setCustomerQuery(""); setShowCustomerDropdown(false); setCreatingCustomer(false) }}
+                            >
+                              {c.name}{c.phone ? ` — ${c.phone}` : ""}
+                            </button>
+                          ))}
+                        <button
+                          type="button"
+                          className="w-full text-left px-3 py-2 text-sm border-t font-medium text-primary hover:bg-accent"
+                          onMouseDown={() => { setCreatingCustomer(true); setShowCustomerDropdown(false); setNewCustomerName(customerQuery); setNewCustomerPhone("") }}
+                        >
+                          + Crear nuevo cliente
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {creatingCustomer && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <Input
+                      placeholder="Nombre del cliente"
+                      value={newCustomerName}
+                      onChange={e => setNewCustomerName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Teléfono (opcional)"
+                      value={newCustomerPhone}
+                      onChange={e => setNewCustomerPhone(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" onClick={async () => {
+                        if (!newCustomerName.trim()) { toast({ title: "El nombre es obligatorio", variant: "destructive" }); return }
+                        const { data: newCust, error } = await supabase.from("customers").insert({
+                          tenant_id: tenantId,
+                          name: newCustomerName.trim(),
+                          phone: newCustomerPhone.trim() || null,
+                        }).select().single()
+                        if (error || !newCust) { toast({ title: "Error al crear cliente", description: error?.message, variant: "destructive" }); return }
+                        setNewBookingCustomerId(newCust.id)
+                        setCreatingCustomer(false)
+                        setCustomerQuery("")
+                        setNewCustomerName("")
+                        setNewCustomerPhone("")
+                        setCustomers(prev => [...prev, newCust].sort((a, b) => a.name.localeCompare(b.name)))
+                        toast({ title: "Cliente creado" })
+                      }}>
+                        Confirmar
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setCreatingCustomer(false)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {!newBookingCustomerId && !creatingCustomer && (
+                  <p className="text-xs text-muted-foreground">Selecciona un cliente existente o crea uno nuevo</p>
+                )}
               </div>
               {newBookingCustomerId && (
                 <div className="space-y-2">
@@ -211,6 +346,71 @@ export default function BookingsPage() {
                 </div>
               </div>
               <Button type="submit" className="w-full">Crear Reserva</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={(v) => { setEditDialogOpen(v); if (!v) { setEditingBooking(null); setEditServiceIds([]) }}}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Editar Reserva</DialogTitle></DialogHeader>
+            <form onSubmit={handleEditBooking} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_customer_id">Cliente</Label>
+                <Select name="customer_id" required defaultValue={editingBooking?.customer_id ?? ""}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
+                  <SelectContent>
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name} {c.phone ? `- ${c.phone}` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {editingBooking?.customer_id && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit_vehicle_id">Vehículo</Label>
+                  <Select name="vehicle_id" defaultValue={editingBooking?.vehicle_id ?? "__none__"}>
+                    <SelectTrigger><SelectValue placeholder="Sin vehículo (opcional)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin vehículo</SelectItem>
+                      {vehicles.filter(v => v.customer_id === editingBooking?.customer_id).map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.plate} {v.brand ? `- ${v.brand}` : ""} {v.model ?? ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Servicios</Label>
+                <div className="space-y-1 max-h-48 overflow-y-auto border rounded-lg p-2">
+                  {services.map((s) => (
+                    <label key={s.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editServiceIds.includes(s.id)}
+                        onChange={() => setEditServiceIds(prev =>
+                          prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id]
+                        )}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm font-medium">{s.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_booking_date">Fecha</Label>
+                  <Input id="edit_booking_date" name="booking_date" type="date" required defaultValue={editingBooking?.booking_date ?? ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_booking_time">Hora</Label>
+                  <Input id="edit_booking_time" name="booking_time" type="time" required defaultValue={editingBooking?.booking_time?.slice(0, 5) ?? ""} />
+                </div>
+              </div>
+              <Button type="submit" className="w-full">Guardar Cambios</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -320,6 +520,9 @@ export default function BookingsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(booking)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
               </CardContent>
             </Card>
           ))
