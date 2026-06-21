@@ -161,6 +161,12 @@ export default function SettingsPage() {
     const { data: urlData } = supabase.storage.from("logos").getPublicUrl(filePath)
     const logoUrl = urlData.publicUrl
 
+    if (!logoUrl.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL!)) {
+      toast({ title: "Error", description: "URL de logo inválida", variant: "destructive" })
+      setUploadingLogo(false)
+      return
+    }
+
     const { error: updateErr } = await supabase.from("tenants").update({ logo_url: logoUrl }).eq("id", tenant.id)
     if (updateErr) {
       toast({ title: "Error al guardar logo", description: updateErr.message, variant: "destructive" })

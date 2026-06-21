@@ -202,7 +202,9 @@ create policy "stamp_insert" on stamp_history for insert to authenticated with c
 -- PUBLIC ACCESS: tenant public site
 create policy "tenant_public_select" on tenants for select to anon using (true);
 
-create policy "customer_public_insert" on customers for insert to anon with check (true);
+create policy "customer_public_insert" on customers for insert to anon with check (
+  exists (select 1 from tenants where id = tenant_id)
+);
 
 create policy "service_public_select" on services for select to anon using (true);
 
@@ -522,8 +524,9 @@ alter table bookings add column if not exists vehicle_id uuid references vehicle
 
 alter table vehicles enable row level security;
 
-create policy "vehicles_anon_insert" on vehicles for insert to anon with check (true);
-create policy "vehicles_anon_select" on vehicles for select to anon using (true);
+create policy "vehicles_anon_insert" on vehicles for insert to anon with check (
+  exists (select 1 from tenants where id = tenant_id)
+);
 create policy "vehicles_authenticated_select" on vehicles for select to authenticated
   using (tenant_id = public.get_user_tenant_id());
 create policy "vehicles_authenticated_insert" on vehicles for insert to authenticated
@@ -557,7 +560,9 @@ create table if not exists booking_services (
 
 alter table booking_services enable row level security;
 
-create policy "booking_services_anon_insert" on booking_services for insert to anon with check (true);
+create policy "booking_services_anon_insert" on booking_services for insert to anon with check (
+  exists (select 1 from bookings where id = booking_id)
+);
 create policy "booking_services_authenticated_select" on booking_services for select to authenticated
   using (booking_id in (select id from bookings where tenant_id = public.get_user_tenant_id()));
 create policy "booking_services_authenticated_insert" on booking_services for insert to authenticated
@@ -594,5 +599,35 @@ create policy "service_images_authenticated_delete"
 on storage.objects for delete to authenticated
 using (
   bucket_id = 'service-images'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+-- 17. STORAGE: logos bucket
+create policy "logos_public_select"
+on storage.objects for select to anon
+using (bucket_id = 'logos');
+
+create policy "logos_authenticated_insert"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'logos'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+create policy "logos_authenticated_update"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'logos'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+)
+with check (
+  bucket_id = 'logos'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+create policy "logos_authenticated_delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'logos'
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
 );
