@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil, Search, Download } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 
@@ -89,6 +89,10 @@ export default function CalendarPage() {
   const [editCustId, setEditCustId] = useState("")
   const [editVehId, setEditVehId] = useState("__none__")
   const [editServiceIds, setEditServiceIds] = useState<string[]>([])
+
+  // List view state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
 
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadWeek() }, [weekStart, tenantId])
@@ -202,6 +206,41 @@ export default function CalendarPage() {
     }
     return map
   }, [bookings])
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b => {
+      if (statusFilter !== "all" && b.status !== statusFilter) return false
+      if (!searchQuery) return true
+      const q = searchQuery.toLowerCase()
+      const name = b.customers?.name?.toLowerCase() ?? ""
+      const plate = b.vehicles?.plate?.toLowerCase() ?? ""
+      const services = b.booking_services?.map((bs: any) => bs.services?.name).join(" ").toLowerCase() ?? ""
+      return name.includes(q) || plate.includes(q) || services.includes(q)
+    })
+  }, [bookings, searchQuery, statusFilter])
+
+  function exportCSV() {
+    const rows = filteredBookings.map(b => {
+      const servicesStr = b.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean).join(", ") ?? ""
+      return [
+        b.booking_date,
+        b.booking_time?.slice(0, 5),
+        `"${(b.customers?.name ?? "").replace(/"/g, '""')}"`,
+        `"${(b.customers?.phone ?? "").replace(/"/g, '""')}"`,
+        `"${(b.vehicles?.plate ?? "").replace(/"/g, '""')}"`,
+        `"${servicesStr.replace(/"/g, '""')}"`,
+        STATUS_LABELS[b.status as BookingStatus] ?? "",
+      ].join(",")
+    })
+    const csv = ["Fecha,Hora,Cliente,Teléfono,Vehículo,Servicios,Estado", ...rows].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `reservas-${fmtDate(weekStart)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   function navPrev() {
     const d = new Date(weekStart)
@@ -339,8 +378,8 @@ export default function CalendarPage() {
             <Button variant="outline" size="sm" onClick={navToday}>Hoy</Button>
             <Button variant="outline" size="icon" onClick={navNext}><ChevronRight className="h-4 w-4" /></Button>
           </div>
-          <span className="text-sm font-medium text-foreground">
-            Semana del {days[0].toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
+          <span className="text-sm font-medium text-foreground whitespace-nowrap">
+            {days[0].toLocaleDateString("es-CL", { day: "numeric" })} — {days[6].toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
           </span>
         </div>
         <Button onClick={() => {
@@ -442,6 +481,75 @@ export default function CalendarPage() {
               )
             })}
           </div>
+        </div>
+      </div>
+
+      {/* List View */}
+      <div className="mt-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar cliente, patente o servicio..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-8 w-64"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-36"><SelectValue placeholder="Filtrar estado" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline" onClick={exportCSV}>
+            <Download className="mr-1 h-4 w-4" /> Exportar CSV
+          </Button>
+        </div>
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="text-left p-3 font-medium">Fecha</th>
+                <th className="text-left p-3 font-medium">Hora</th>
+                <th className="text-left p-3 font-medium">Cliente</th>
+                <th className="text-left p-3 font-medium">Teléfono</th>
+                <th className="text-left p-3 font-medium">Vehículo</th>
+                <th className="text-left p-3 font-medium">Servicios</th>
+                <th className="text-left p-3 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBookings.length === 0 ? (
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Sin resultados</td></tr>
+              ) : (
+                filteredBookings.map(b => (
+                  <tr
+                    key={b.id}
+                    className="border-b hover:bg-muted/40 cursor-pointer transition-colors"
+                    onClick={() => { setDetailBooking(b); setDetailOpen(true) }}
+                  >
+                    <td className="p-3">{b.booking_date}</td>
+                    <td className="p-3">{b.booking_time?.slice(0, 5)}</td>
+                    <td className="p-3">{b.customers?.name}</td>
+                    <td className="p-3">{b.customers?.phone}</td>
+                    <td className="p-3">{b.vehicles?.plate}</td>
+                    <td className="p-3">{b.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean).join(", ")}</td>
+                    <td className="p-3">
+                      <Badge className={b.status === "reserved" ? "bg-blue-100 text-blue-800" : b.status === "waiting" ? "bg-yellow-100 text-yellow-800" : b.status === "in_progress" ? "bg-orange-100 text-orange-800" : b.status === "ready" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                        {STATUS_LABELS[b.status as BookingStatus]}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
