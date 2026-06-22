@@ -203,7 +203,7 @@ export default function BookingsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold">Agenda</h1>
           <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) setSelectedServiceIds([]) }}>
           <DialogTrigger asChild>
@@ -417,8 +417,8 @@ export default function BookingsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6 items-end">
-        <div className="flex-1 min-w-[200px]">
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 items-end">
+        <div className="w-full sm:flex-1 sm:min-w-[200px]">
           <Label className="text-xs mb-1 block">Buscar cliente/patente</Label>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -430,10 +430,10 @@ export default function BookingsPage() {
             />
           </div>
         </div>
-        <div>
+        <div className="flex-1 sm:flex-none min-w-0">
           <Label className="text-xs mb-1 block">Estado</Label>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {Object.entries(statusLabels).map(([key, label]) => (
@@ -442,13 +442,13 @@ export default function BookingsPage() {
             </SelectContent>
           </Select>
         </div>
-        <div>
+        <div className="flex-1 sm:flex-none min-w-0">
           <Label className="text-xs mb-1 block">Desde</Label>
-          <Input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="w-36" />
+          <Input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="w-full sm:w-36" />
         </div>
-        <div>
+        <div className="flex-1 sm:flex-none min-w-0">
           <Label className="text-xs mb-1 block">Hasta</Label>
-          <Input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="w-36" />
+          <Input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="w-full sm:w-36" />
         </div>
         {(search || filterStatus !== "all" || filterDateFrom || filterDateTo) && (
           <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setFilterStatus("all"); setFilterDateFrom(""); setFilterDateTo("") }}>
@@ -482,14 +482,14 @@ export default function BookingsPage() {
         ) : (
           filteredBookings.map((booking) => (
             <Card key={booking.id}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="text-right min-w-[60px]">
-                  <p className="font-medium">{booking.booking_time?.slice(0, 5)}</p>
+              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4">
+                <div className="flex sm:flex-col items-baseline sm:items-end gap-2 sm:gap-0 sm:text-right sm:min-w-[60px] shrink-0">
+                  <p className="font-medium text-sm sm:text-base">{booking.booking_time?.slice(0, 5)}</p>
                   <p className="text-xs text-muted-foreground">{booking.booking_date}</p>
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium">{booking.customers?.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex-1 min-w-0 w-full sm:w-auto">
+                  <p className="font-medium truncate">{booking.customers?.name}</p>
+                  <p className="text-sm text-muted-foreground truncate">
                     {booking.vehicles ? (
                       <Link href={`/dashboard/vehicles/${booking.vehicles.id}`} className="hover:underline">
                         {booking.vehicles.plate}
@@ -504,25 +504,27 @@ export default function BookingsPage() {
                     }
                   </p>
                 </div>
-                <Badge className={statusColors[booking.status as BookingStatus]}>
-                  {statusLabels[booking.status as BookingStatus]}
-                </Badge>
-                <Select
-                  value={booking.status}
-                  onValueChange={(val: BookingStatus) => updateStatus(booking.id, val)}
-                >
-                  <SelectTrigger className="w-36">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(statusLabels).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(booking)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2 self-end sm:self-center shrink-0 w-full sm:w-auto justify-end sm:justify-start">
+                  <Badge className={`${statusColors[booking.status as BookingStatus]} shrink-0`}>
+                    {statusLabels[booking.status as BookingStatus]}
+                  </Badge>
+                  <Select
+                    value={booking.status}
+                    onValueChange={(val: BookingStatus) => updateStatus(booking.id, val)}
+                  >
+                    <SelectTrigger className="w-28 sm:w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusLabels).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(booking)} className="shrink-0">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))

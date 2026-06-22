@@ -143,7 +143,10 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
         </header>
 
         <div className="flex">
-          <aside className={`${sidebarOpen ? "block" : "hidden"} md:block w-64 border-r bg-background min-h-[calc(100vh-4rem)]`}>
+          {sidebarOpen && (
+            <div className="fixed inset-0 top-16 z-30 bg-background/80 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
+          )}
+          <aside className={`${sidebarOpen ? "block fixed left-0 top-16 bottom-0 z-40" : "hidden"} md:block md:relative md:top-0 w-64 border-r bg-background min-h-[calc(100vh-4rem)]`}>
             <nav className="p-4 space-y-1">
               {filteredNav.map((item) => (
                 <Link
@@ -158,7 +161,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
           </aside>
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden">{children}</main>
         </div>
       </div>
     </RoleContext.Provider>

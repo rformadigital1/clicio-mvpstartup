@@ -291,12 +291,12 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {hours.map((h) => (
-            <div key={h.day_of_week} className="flex items-center gap-3">
+            <div key={h.day_of_week} className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Switch
                 checked={h.is_open}
                 onCheckedChange={(v) => updateHour(h.day_of_week, "is_open", v)}
               />
-              <span className={`w-24 text-sm ${!h.is_open ? "line-through text-muted-foreground" : ""}`}>
+              <span className={`w-20 sm:w-24 text-sm ${!h.is_open ? "line-through text-muted-foreground" : ""}`}>
                 {DAY_NAMES[h.day_of_week]}
               </span>
               <Input
@@ -304,7 +304,7 @@ export default function SettingsPage() {
                 value={h.open_time}
                 onChange={(e) => updateHour(h.day_of_week, "open_time", e.target.value)}
                 disabled={!h.is_open}
-                className="w-32"
+                className="w-28 sm:w-32"
               />
               <span className="text-muted-foreground">a</span>
               <Input
@@ -312,7 +312,7 @@ export default function SettingsPage() {
                 value={h.close_time}
                 onChange={(e) => updateHour(h.day_of_week, "close_time", e.target.value)}
                 disabled={!h.is_open}
-                className="w-32"
+                className="w-28 sm:w-32"
               />
             </div>
           ))}

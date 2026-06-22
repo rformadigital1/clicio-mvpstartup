@@ -229,7 +229,7 @@ export default function ReportsPage() {
     <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">Reportes</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={!metrics}>
             <Download className="h-4 w-4 mr-1" /> CSV
           </Button>

@@ -105,7 +105,7 @@ export default function LoyaltyPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Fidelización</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Dialog open={claimDialogOpen} onOpenChange={setClaimDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" disabled={eligibleCustomers.length === 0}>

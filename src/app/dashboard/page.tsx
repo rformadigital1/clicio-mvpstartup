@@ -217,18 +217,18 @@ export default function DashboardPage() {
           ) : (
             <div className="divide-y">
               {recentBookings.map((b: any) => (
-                <div key={b.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">{b.customers?.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                <div key={b.id} className="flex items-start sm:items-center justify-between gap-2 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{b.customers?.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">
                       {b.vehicles && `${b.vehicles.plate}${b.vehicles.brand ? ` - ${b.vehicles.brand}` : ""}${b.booking_services?.length ? " — " : ""}`}
                       {b.booking_services?.length > 0
                         ? b.booking_services.map((bs: any) => bs.services?.name).filter(Boolean).join(", ")
                         : b.services?.name}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm">{b.booking_date} {b.booking_time?.slice(0, 5)}</p>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm whitespace-nowrap">{b.booking_date} {b.booking_time?.slice(0, 5)}</p>
                     <Badge className={statusColors[b.status]}>{statusLabels[b.status]}</Badge>
                   </div>
                 </div>
