@@ -261,6 +261,7 @@ declare
   v_tenant_id uuid;
   v_tenant_slug text;
   v_invite record;
+  v_slug_exists boolean;
 begin
   -- Staff invite flow
   if new.raw_user_meta_data ? 'invite_code' then
@@ -278,11 +279,21 @@ begin
   end if;
 
   -- Normal flow: create tenant + owner
+  -- Use taller_url from signup form if provided, otherwise generate from taller_nombre
   v_tenant_slug := lower(regexp_replace(
-    coalesce(new.raw_user_meta_data ->> 'taller_nombre', 'taller'),
+    coalesce(
+      new.raw_user_meta_data ->> 'taller_url',
+      new.raw_user_meta_data ->> 'taller_nombre',
+      'taller'
+    ),
     '[^a-z0-9]+', '-', 'g'
   ));
-  v_tenant_slug := v_tenant_slug || '-' || substr(new.id::text, 1, 8);
+
+  -- Ensure slug is unique
+  select exists(select 1 from public.tenants where slug = v_tenant_slug) into v_slug_exists;
+  if v_slug_exists then
+    v_tenant_slug := v_tenant_slug || '-' || substr(new.id::text, 1, 8);
+  end if;
 
   insert into public.tenants (name, slug, email)
   values (
