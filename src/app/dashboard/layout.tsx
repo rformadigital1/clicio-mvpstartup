@@ -146,17 +146,25 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
           )}
           <aside className={`${sidebarOpen ? "block fixed left-0 top-16 bottom-0 z-40" : "hidden"} md:block md:relative md:top-0 w-64 border-r bg-background min-h-[calc(100vh-4rem)]`}>
             <nav className="p-4 space-y-1">
-              {filteredNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              ))}
+              {filteredNav.map((item) => {
+                const itemPath = item.href.split("?")[0]
+                const isActive = itemPath === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(itemPath)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "bg-accent text-accent-foreground font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
             </nav>
           </aside>
           <main className="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden">{children}</main>

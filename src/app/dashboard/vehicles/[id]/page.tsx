@@ -8,22 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Car, Calendar, Wrench } from "lucide-react"
 import type { Vehicle, Booking, Service } from "@/lib/types"
-
-const statusLabels: Record<string, string> = {
-  reserved: "Reservado",
-  waiting: "Esperando",
-  in_progress: "En progreso",
-  ready: "Listo",
-  delivered: "Entregado",
-}
-
-const statusColors: Record<string, string> = {
-  reserved: "bg-blue-100 text-blue-800",
-  waiting: "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-orange-100 text-orange-800",
-  ready: "bg-green-100 text-green-800",
-  delivered: "bg-gray-100 text-gray-800",
-}
+import { STATUS_LABELS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
 
 export default function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -150,7 +135,7 @@ export default function VehicleDetailPage() {
                     {(b as any).services?.price ? ` - $${(b as any).services.price.toLocaleString("es-CL")}` : ""}
                   </p>
                 </div>
-                <Badge className={statusColors[b.status]}>{statusLabels[b.status] || b.status}</Badge>
+                <Badge className={STATUS_BADGE_CLASSES[b.status as import("@/lib/types").BookingStatus]}>{STATUS_LABELS[b.status as import("@/lib/types").BookingStatus] || b.status}</Badge>
               </CardContent>
             </Card>
           ))}

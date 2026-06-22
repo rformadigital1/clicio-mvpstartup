@@ -9,22 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Users, DollarSign, Clock, CheckCircle2, Wrench, CalendarDays } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-
-const statusLabels: Record<string, string> = {
-  reserved: "Reservado",
-  waiting: "Esperando",
-  in_progress: "En progreso",
-  ready: "Listo",
-  delivered: "Entregado",
-}
-
-const statusColors: Record<string, string> = {
-  reserved: "bg-blue-100 text-blue-800",
-  waiting: "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-orange-100 text-orange-800",
-  ready: "bg-green-100 text-green-800",
-  delivered: "bg-gray-100 text-gray-800",
-}
+import type { BookingStatus } from "@/lib/types"
+import { STATUS_LABELS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
 
 export default function DashboardPage() {
   const supabase = createClient()
@@ -220,7 +206,7 @@ export default function DashboardPage() {
         {statusCards.map(({ status, icon: Icon, color }) => (
           <Card key={status}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{statusLabels[status]}</CardTitle>
+              <CardTitle className="text-sm font-medium">{STATUS_LABELS[status as BookingStatus]}</CardTitle>
               <Icon className={`h-5 w-5 ${color}`} />
             </CardHeader>
             <CardContent>
@@ -256,7 +242,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm whitespace-nowrap">{b.booking_date} {b.booking_time?.slice(0, 5)}</p>
-                    <Badge className={statusColors[b.status]}>{statusLabels[b.status]}</Badge>
+                    <Badge className={STATUS_BADGE_CLASSES[b.status as BookingStatus]}>{STATUS_LABELS[b.status as BookingStatus]}</Badge>
                   </div>
                 </div>
               ))}

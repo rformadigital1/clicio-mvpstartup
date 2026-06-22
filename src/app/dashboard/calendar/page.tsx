@@ -13,29 +13,9 @@ import { checkAvailability } from "@/lib/availability"
 import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil, Search, Download } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
+import { STATUS_LABELS, STATUS_COLORS, STATUS_TEXT_COLORS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-const STATUS_COLORS: Record<BookingStatus, string> = {
-  reserved: "#dbeafe",
-  waiting: "#fef3c7",
-  in_progress: "#fed7aa",
-  ready: "#bbf7d0",
-  delivered: "#e5e7eb",
-}
-const STATUS_TEXT_COLORS: Record<BookingStatus, string> = {
-  reserved: "#1e40af",
-  waiting: "#92400e",
-  in_progress: "#9a3412",
-  ready: "#166534",
-  delivered: "#374151",
-}
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  reserved: "Reservado",
-  waiting: "Esperando",
-  in_progress: "En progreso",
-  ready: "Listo",
-  delivered: "Entregado",
-}
 const HOUR_HEIGHT = 56
 
 function getWeekStart(d: Date): Date {
@@ -541,7 +521,7 @@ export default function CalendarPage() {
                     <td className="p-3">{b.vehicles?.plate}</td>
                     <td className="p-3">{b.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean).join(", ")}</td>
                     <td className="p-3">
-                      <Badge className={b.status === "reserved" ? "bg-blue-100 text-blue-800" : b.status === "waiting" ? "bg-yellow-100 text-yellow-800" : b.status === "in_progress" ? "bg-orange-100 text-orange-800" : b.status === "ready" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                      <Badge className={STATUS_BADGE_CLASSES[b.status as BookingStatus]}>
                         {STATUS_LABELS[b.status as BookingStatus]}
                       </Badge>
                     </td>
@@ -620,7 +600,7 @@ export default function CalendarPage() {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span>{detailBooking.booking_date} — {detailBooking.booking_time?.slice(0, 5)}</span>
-                <Badge className={detailBooking.status === "reserved" ? "bg-blue-100 text-blue-800" : detailBooking.status === "waiting" ? "bg-yellow-100 text-yellow-800" : detailBooking.status === "in_progress" ? "bg-orange-100 text-orange-800" : detailBooking.status === "ready" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                <Badge className={STATUS_BADGE_CLASSES[detailBooking.status as BookingStatus]}>
                   {STATUS_LABELS[detailBooking.status as BookingStatus]}
                 </Badge>
               </div>
