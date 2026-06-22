@@ -12,7 +12,7 @@ import ButtonsSection from "@/components/appearance/buttons-section"
 
 const DEFAULT_CONFIG: PageConfig = {
   colors: { primary: "#1A3A8A", secondary: "#4A90D9", accent: "#E3242B", background: "#F7F5F3", cardBg: "#FFFFFF", text: "#1A1A1A", buttonBg: "#1A3A8A", buttonText: "#FFFFFF" },
-  typography: { headingFont: "var(--font-display)", bodyFont: "Inter" },
+  typography: { headingFont: "var(--font-display)", bodyFont: "Inter, sans-serif" },
   sections: [
     { id: "quick-buttons", visible: true, order: 0 },
     { id: "services", visible: true, order: 1 },
@@ -41,26 +41,30 @@ export default function AppearancePage() {
   }, [])
 
   async function loadTenant() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("tenant_id")
-      .eq("id", user.id)
-      .single()
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user.id)
+        .single()
 
-    if (!profile) { setLoading(false); return }
+      if (!profile) { setLoading(false); return }
 
-    const { data: tData } = await supabase
-      .from("tenants")
-      .select("*")
-      .eq("id", profile.tenant_id)
-      .single()
+      const { data: tData } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", profile.tenant_id)
+        .single()
 
-    if (tData) {
-      setTenant(tData)
-      setConfig(tData.page_config ?? DEFAULT_CONFIG)
+      if (tData) {
+        setTenant(tData)
+        setConfig(tData.page_config ?? DEFAULT_CONFIG)
+      }
+    } catch {
+      toast({ title: "Error al cargar", description: "No se pudo cargar la configuración", variant: "destructive" })
     }
     setLoading(false)
   }
@@ -77,13 +81,14 @@ export default function AppearancePage() {
       toast({ title: "Error al guardar", description: error.message, variant: "destructive" })
     } else {
       toast({ title: "Cambios guardados" })
-      setTenant({ ...tenant, page_config: config as any })
+      setTenant({ ...tenant, page_config: config })
     }
     setSaving(false)
   }
 
   function resetDefaults() {
     setConfig(DEFAULT_CONFIG)
+    toast({ title: "Defaults restaurados" })
   }
 
   if (loading) return <div className="animate-pulse text-sm text-muted-foreground py-8 text-center">Cargando...</div>

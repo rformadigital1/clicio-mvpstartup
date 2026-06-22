@@ -11,7 +11,7 @@ create table if not exists tenants (
   phone text,
   email text,
   instagram text,
-  page_config jsonb not null default '{"colors":{"primary":"#1A3A8A","secondary":"#4A90D9","accent":"#E3242B","background":"#F7F5F3","cardBg":"#FFFFFF","text":"#1A1A1A","buttonBg":"#1A3A8A","buttonText":"#FFFFFF"},"typography":{"headingFont":"var(--font-display)","bodyFont":"Inter"},"sections":[{"id":"quick-buttons","visible":true,"order":0},{"id":"services","visible":true,"order":1},{"id":"booking-wizard","visible":true,"order":2},{"id":"gallery","visible":true,"order":3},{"id":"map","visible":true,"order":4}],"buttons":{"whatsapp":{"visible":true,"label":"WhatsApp"},"instagram":{"visible":true,"label":"Instagram"},"servicios":{"visible":true,"label":"Servicios"},"agendar":{"visible":true,"label":"Agendar Ahora"}}}'::jsonb,
+  page_config jsonb not null default '{"colors":{"primary":"#1A3A8A","secondary":"#4A90D9","accent":"#E3242B","background":"#F7F5F3","cardBg":"#FFFFFF","text":"#1A1A1A","buttonBg":"#1A3A8A","buttonText":"#FFFFFF"},"typography":{"headingFont":"var(--font-display)","bodyFont":"Inter, sans-serif"},"sections":[{"id":"quick-buttons","visible":true,"order":0},{"id":"services","visible":true,"order":1},{"id":"booking-wizard","visible":true,"order":2},{"id":"gallery","visible":true,"order":3},{"id":"map","visible":true,"order":4}],"buttons":{"whatsapp":{"visible":true,"label":"WhatsApp"},"instagram":{"visible":true,"label":"Instagram"},"servicios":{"visible":true,"label":"Servicios"},"agendar":{"visible":true,"label":"Agendar Ahora"}}}'::jsonb,
   created_at timestamptz default now()
 );
 
