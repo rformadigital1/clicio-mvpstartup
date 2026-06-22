@@ -3,8 +3,26 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Tenant, Service, BusinessHour, GalleryImage } from "@/lib/types"
+import type { Tenant, Service, BusinessHour, GalleryImage, PageConfig } from "@/lib/types"
 import { BookingWizard } from "@/components/booking/booking-wizard"
+
+const DEFAULT_CONFIG: PageConfig = {
+  colors: { primary: "#1A3A8A", secondary: "#4A90D9", accent: "#E3242B", background: "#F7F5F3", cardBg: "#FFFFFF", text: "#1A1A1A", buttonBg: "#1A3A8A", buttonText: "#FFFFFF" },
+  typography: { headingFont: "var(--font-display)", bodyFont: "Inter, sans-serif" },
+  sections: [
+    { id: "quick-buttons", visible: true, order: 0 },
+    { id: "services", visible: true, order: 1 },
+    { id: "booking-wizard", visible: true, order: 2 },
+    { id: "gallery", visible: true, order: 3 },
+    { id: "map", visible: true, order: 4 },
+  ],
+  buttons: {
+    whatsapp: { visible: true, label: "WhatsApp" },
+    instagram: { visible: true, label: "Instagram" },
+    servicios: { visible: true, label: "Servicios" },
+    agendar: { visible: true, label: "Agendar Ahora" },
+  },
+}
 
 export default function TenantSitePage() {
   const { slug } = useParams<{ slug: string }>()
@@ -51,9 +69,9 @@ export default function TenantSitePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-bg-concreto flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--page-bg)] flex items-center justify-center">
         <div className="text-center animate-pulse">
-          <p className="text-azul-rey font-[family-name:var(--font-display)] italic text-xl">Cargando...</p>
+          <p className="text-[var(--page-primary)] font-[var(--page-heading-font)] italic text-xl">Cargando...</p>
         </div>
       </div>
     )
@@ -61,7 +79,7 @@ export default function TenantSitePage() {
 
   if (notFound || !tenant) {
     return (
-      <div className="min-h-screen bg-bg-concreto flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[var(--page-bg)] flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-5xl mb-4">🔧</p>
           <h1 className="text-2xl font-bold text-foreground mb-2">Taller no encontrado</h1>
@@ -73,131 +91,164 @@ export default function TenantSitePage() {
 
   const cleanPhone = tenant.phone?.replace(/[^0-9]/g, "")
 
+  const config: PageConfig = tenant.page_config ?? DEFAULT_CONFIG
+
+  const pageStyle = {
+    "--page-primary": config.colors.primary,
+    "--page-secondary": config.colors.secondary,
+    "--page-accent": config.colors.accent,
+    "--page-bg": config.colors.background,
+    "--page-card-bg": config.colors.cardBg,
+    "--page-text": config.colors.text,
+    "--page-btn-bg": config.colors.buttonBg,
+    "--page-btn-text": config.colors.buttonText,
+    "--page-heading-font": config.typography.headingFont,
+    "--page-body-font": config.typography.bodyFont,
+  } as React.CSSProperties
+
+  const sortedSections = [...config.sections].sort((a, b) => a.order - b.order)
+
+  const quickButtonsSection = (
+    <div className="space-y-3 mb-10">
+      {config.buttons.whatsapp.visible && cleanPhone && (
+        <a
+          href={`https://wa.me/${cleanPhone}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all"
+        >
+          <WhatsAppIcon />
+          {config.buttons.whatsapp.label}
+          <span className="ml-auto text-muted-foreground text-xs">↗</span>
+        </a>
+      )}
+      {config.buttons.instagram.visible && tenant.instagram && (
+        <a
+          href={tenant.instagram}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all"
+        >
+          <InstagramIcon />
+          {config.buttons.instagram.label}
+          <span className="ml-auto text-muted-foreground text-xs">↗</span>
+        </a>
+      )}
+      {config.buttons.servicios.visible && (
+        <button
+          onClick={() => servicesRef.current?.scrollIntoView({ behavior: "smooth" })}
+          className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all text-left"
+        >
+          <WrenchIcon />
+          {config.buttons.servicios.label}
+        </button>
+      )}
+      {config.buttons.agendar.visible && (
+        <button
+          onClick={() => wizardRef.current?.scrollIntoView({ behavior: "smooth" })}
+          className="flex items-center gap-3 w-full bg-[var(--page-btn-bg)] text-[var(--page-btn-text)] border border-[var(--page-btn-bg)] rounded-lg px-4 py-3 text-sm font-semibold hover:bg-[var(--page-btn-bg)]/90 transition-all shadow-sm"
+        >
+          <CalendarIcon />
+          {config.buttons.agendar.label}
+        </button>
+      )}
+    </div>
+  )
+
+  const servicesSection = services.length > 0 ? (
+    <section ref={servicesRef} id="servicios" className="py-8">
+      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center">Servicios</h3>
+      <div className="space-y-3">
+        {services.map((s) => (
+          <div key={s.id} className="bg-[var(--page-card-bg)] rounded-lg p-4 border border-border-subtil flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold text-sm">{s.name}</h4>
+              {s.duration && <p className="text-xs text-muted-foreground">{s.duration} min</p>}
+            </div>
+            {s.price && <p className="text-sm font-bold text-[var(--page-primary)]">$ {s.price.toLocaleString("es-CL")}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  ) : null
+
+  const bookingWizardSection = (
+    <div ref={wizardRef} className="py-8">
+      <BookingWizard tenant={tenant} services={services} businessHours={hours} />
+    </div>
+  )
+
+  const gallerySection = gallery.length > 0 ? (
+    <section className="py-8">
+      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center">Trabajos Realizados</h3>
+      <div className="grid grid-cols-2 gap-3">
+        {gallery.map((img) => (
+          <button key={img.id} onClick={() => setLightboxUrl(img.image_url)} className="aspect-square overflow-hidden rounded-lg border border-border-subtil group">
+            <img src={img.image_url} alt={`Trabajo realizado por ${tenant.name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          </button>
+        ))}
+      </div>
+    </section>
+  ) : null
+
+  const mapSection = tenant.address ? (
+    <section className="py-8">
+      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center">Ubicación</h3>
+      <div className="rounded-lg overflow-hidden border border-border-subtil">
+        <iframe
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(tenant.address)}&output=embed`}
+          className="w-full h-56"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
+    </section>
+  ) : null
+
+  const sectionRenderers: Record<string, React.ReactNode> = {
+    "quick-buttons": quickButtonsSection,
+    "services": servicesSection,
+    "booking-wizard": bookingWizardSection,
+    "gallery": gallerySection,
+    "map": mapSection,
+  }
+
   return (
-    <div className="min-h-screen bg-bg-concreto">
+    <div className="min-h-screen" style={pageStyle}>
       <main className="max-w-lg mx-auto px-4 py-10">
         {/* Logo + Name */}
         <div className="text-center mb-8">
           <div className="flex justify-center">
             {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="w-20 h-20 rounded-full object-cover border-2 border-azul-rey/20" />
+              <img src={tenant.logo_url} alt={tenant.name} className="w-20 h-20 rounded-full object-cover border-2 border-[var(--page-primary)]/20" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-azul-rey to-celeste-cielo flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">{tenant.name.charAt(0)}</span>
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--page-primary)] to-[var(--page-secondary)] flex items-center justify-center">
+                <span className="text-2xl font-bold text-[var(--page-btn-text)]">{tenant.name.charAt(0)}</span>
               </div>
             )}
           </div>
-          <h1 className="text-xl font-[family-name:var(--font-display)] italic font-bold text-azul-rey mt-4">{tenant.name}</h1>
+          <h1 className="text-xl font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mt-4">{tenant.name}</h1>
           {tenant.address && <p className="text-sm text-muted-foreground mt-1">{tenant.address}</p>}
         </div>
 
-        {/* Quick Action Buttons */}
-        <div className="space-y-3 mb-10">
-          {cleanPhone && (
-            <a
-              href={`https://wa.me/${cleanPhone}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 w-full bg-white border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-azul-rey/40 hover:shadow-sm transition-all"
-            >
-              <WhatsAppIcon />
-              WhatsApp
-              <span className="ml-auto text-muted-foreground text-xs">↗</span>
-            </a>
-          )}
-          {tenant.instagram && (
-            <a
-              href={tenant.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 w-full bg-white border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-azul-rey/40 hover:shadow-sm transition-all"
-            >
-              <InstagramIcon />
-              Instagram
-              <span className="ml-auto text-muted-foreground text-xs">↗</span>
-            </a>
-          )}
-          <button
-            onClick={() => servicesRef.current?.scrollIntoView({ behavior: "smooth" })}
-            className="flex items-center gap-3 w-full bg-white border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-azul-rey/40 hover:shadow-sm transition-all text-left"
-          >
-            <WrenchIcon />
-            Servicios
-          </button>
-          <button
-            onClick={() => wizardRef.current?.scrollIntoView({ behavior: "smooth" })}
-            className="flex items-center gap-3 w-full bg-azul-rey text-white border border-azul-rey rounded-lg px-4 py-3 text-sm font-semibold hover:bg-azul-rey/90 transition-all shadow-sm"
-          >
-            <CalendarIcon />
-            Agendar Ahora
-          </button>
-        </div>
-
-        {/* Services */}
-        {services.length > 0 && (
-          <section ref={servicesRef} id="servicios" className="py-8">
-            <h3 className="text-lg font-[family-name:var(--font-display)] italic font-bold text-azul-rey mb-5 text-center">Servicios</h3>
-            <div className="space-y-3">
-              {services.map((s) => (
-                <div key={s.id} className="bg-white rounded-lg p-4 border border-border-subtil flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm">{s.name}</h4>
-                    {s.duration && <p className="text-xs text-muted-foreground">{s.duration} min</p>}
-                  </div>
-                  {s.price && <p className="text-sm font-bold text-azul-rey">$ {s.price.toLocaleString("es-CL")}</p>}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Booking Wizard */}
-        <div ref={wizardRef} className="py-8">
-          <BookingWizard tenant={tenant} services={services} businessHours={hours} />
-        </div>
-
-        {/* Gallery */}
-        {gallery.length > 0 && (
-          <section className="py-8">
-            <h3 className="text-lg font-[family-name:var(--font-display)] italic font-bold text-azul-rey mb-5 text-center">Trabajos Realizados</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {gallery.map((img) => (
-                <button key={img.id} onClick={() => setLightboxUrl(img.image_url)} className="aspect-square overflow-hidden rounded-lg border border-border-subtil group">
-                  <img src={img.image_url} alt={`Trabajo realizado por ${tenant.name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Lightbox */}
-        {lightboxUrl && (
-          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-pointer" onClick={() => setLightboxUrl(null)}>
-            <img src={lightboxUrl} alt="Trabajo realizado" className="max-w-full max-h-full object-contain rounded-lg" />
-          </div>
-        )}
-
-        {/* Map */}
-        {tenant.address && (
-          <section className="py-8">
-            <h3 className="text-lg font-[family-name:var(--font-display)] italic font-bold text-azul-rey mb-5 text-center">Ubicación</h3>
-            <div className="rounded-lg overflow-hidden border border-border-subtil">
-              <iframe
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(tenant.address)}&output=embed`}
-                className="w-full h-56"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-          </section>
-        )}
+        {sortedSections.map(section => {
+          if (!section.visible) return null
+          return <div key={section.id}>{sectionRenderers[section.id]}</div>
+        })}
 
         {/* Footer */}
         <footer className="pt-8 pb-4 text-center text-xs text-muted-foreground border-t border-border-subtil mt-8">
           {tenant.name}{cleanPhone ? ` · ${cleanPhone}` : ""}
         </footer>
       </main>
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-pointer" onClick={() => setLightboxUrl(null)}>
+          <img src={lightboxUrl} alt="Trabajo realizado" className="max-w-full max-h-full object-contain rounded-lg" />
+        </div>
+      )}
 
       {/* WhatsApp FAB */}
       {cleanPhone && (
@@ -236,7 +287,7 @@ function InstagramIcon() {
 
 function WrenchIcon() {
   return (
-    <svg className="h-5 w-5 text-azul-rey shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+    <svg className="h-5 w-5 text-[var(--page-primary)] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M4.867 19.125h.008v.008h-.008v-.008Z" />
     </svg>
