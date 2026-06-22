@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Users, DollarSign, Clock, CheckCircle2, Wrench, CalendarDays, TrendingUp, TrendingDown } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PageHeader } from "@/components/ui/page-header"
 import type { BookingStatus } from "@/lib/types"
 import { STATUS_LABELS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
 
@@ -22,6 +21,7 @@ export default function DashboardPage() {
   const [prevMonthRevenue, setPrevMonthRevenue] = useState(0)
   const [monthBookings, setMonthBookings] = useState(0)
   const [totalCustomers, setTotalCustomers] = useState(0)
+  const [tenantName, setTenantName] = useState("")
   const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -40,6 +40,14 @@ export default function DashboardPage() {
 
     setTenantId(profile.tenant_id)
     const tid = profile.tenant_id
+
+    // Fetch tenant name for greeting
+    const { data: tenantData } = await supabase
+      .from("tenants")
+      .select("name")
+      .eq("id", profile.tenant_id)
+      .single()
+    if (tenantData) setTenantName(tenantData.name)
 
     // Redirect owner to onboarding if no services configured
     if (profile.role === "owner") {
@@ -170,7 +178,14 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Dashboard" />
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-[family-name:var(--font-display)] italic font-bold text-foreground">
+          Hola, {tenantName.toLowerCase()}
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          {new Date().toLocaleDateString("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} — Resumen del día
+        </p>
+      </div>
 
       {/* Top metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
