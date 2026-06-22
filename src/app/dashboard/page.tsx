@@ -7,8 +7,9 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Users, DollarSign, Clock, CheckCircle2, Wrench, CalendarDays } from "lucide-react"
+import { Calendar, Users, DollarSign, Clock, CheckCircle2, Wrench, CalendarDays, TrendingUp, TrendingDown } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/ui/page-header"
 import type { BookingStatus } from "@/lib/types"
 import { STATUS_LABELS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
 
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [todayCounts, setTodayCounts] = useState<Record<string, number>>({})
   const [monthRevenue, setMonthRevenue] = useState(0)
+  const [prevMonthRevenue, setPrevMonthRevenue] = useState(0)
   const [monthBookings, setMonthBookings] = useState(0)
   const [totalCustomers, setTotalCustomers] = useState(0)
   const [recentBookings, setRecentBookings] = useState<any[]>([])
@@ -88,6 +90,28 @@ export default function DashboardPage() {
     setMonthRevenue(revenue)
     setMonthBookings(total)
 
+    // Previous month revenue
+    const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const prevStart = prevD.toISOString()
+    const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10)
+    const { data: prevData } = await supabase
+      .from("bookings")
+      .select("status, booking_services(service_id, services(price)), services(price)")
+      .eq("tenant_id", tid)
+      .eq("status", "delivered")
+      .gte("created_at", prevStart)
+      .lte("created_at", prevEnd)
+
+    let prevRev = 0
+    prevData?.forEach((b: any) => {
+      if (b.booking_services?.length > 0) {
+        prevRev += b.booking_services.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+      } else {
+        prevRev += b.services?.price ?? 0
+      }
+    })
+    setPrevMonthRevenue(prevRev)
+
     // Total customers
     const { count: custCount } = await supabase
       .from("customers")
@@ -136,6 +160,8 @@ export default function DashboardPage() {
     </div>
   )
 
+  const revenueDelta = prevMonthRevenue > 0 ? Math.round(((monthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100) : null
+
   const statusCards = [
     { status: "reserved", icon: Clock, color: "text-blue-600" },
     { status: "in_progress", icon: Wrench, color: "text-orange-600" },
@@ -144,7 +170,7 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <PageHeader title="Dashboard" />
 
       {/* Top metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -164,6 +190,15 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">$ {monthRevenue.toLocaleString("es-CL")}</p>
+            {revenueDelta !== null && (
+              <p className={`text-sm mt-1 flex items-center gap-1 ${revenueDelta >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {revenueDelta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {Math.abs(revenueDelta)}% vs mes anterior
+              </p>
+            )}
+            {revenueDelta === null && prevMonthRevenue === 0 && monthRevenue > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">Sin datos del mes anterior</p>
+            )}
           </CardContent>
         </Card>
         <Card>

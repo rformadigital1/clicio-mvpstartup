@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Trash2, Car } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertDialog } from "@/components/ui/alert-dialog"
+import { PageHeader } from "@/components/ui/page-header"
 import type { Service } from "@/lib/types"
 
 export default function ServicesPage() {
@@ -95,14 +96,13 @@ export default function ServicesPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Servicios</h1>
+      <PageHeader title="Servicios">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>Nuevo Servicio</Button>
           </DialogTrigger>
 
-          <DialogContent>
+          <DialogContent size="sm">
             <DialogHeader>
               <DialogTitle>Nuevo Servicio</DialogTitle>
             </DialogHeader>
@@ -123,7 +123,7 @@ export default function ServicesPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </PageHeader>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (

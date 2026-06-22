@@ -8,10 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { BarChart3, TrendingUp, Clock, AlertCircle, Download } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-
-function pct(part: number, total: number): number {
-  return total > 0 ? (part / total) * 100 : 0
-}
+import { PageHeader } from "@/components/ui/page-header"
+import { DonutChart } from "@/components/ui/donut-chart"
 
 export default function ReportsPage() {
   const supabase = createClient()
@@ -252,8 +250,7 @@ export default function ReportsPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold">Reportes</h1>
+      <PageHeader title="Reportes">
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={!metrics}>
             <Download className="h-4 w-4 mr-1" /> CSV
@@ -275,7 +272,7 @@ export default function ReportsPage() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </PageHeader>
 
       {metrics ? (
         <div className="space-y-6">
@@ -359,14 +356,10 @@ export default function ReportsPage() {
               <CardContent>
                 <div className="flex items-center gap-6">
                   {metrics.newCustomers + metrics.returningCustomers > 0 ? (
-                    <div
-                      className="h-20 w-20 rounded-full shrink-0"
-                      style={{
-                        background: `conic-gradient(
-                          #3b82f6 0% ${pct(metrics.newCustomers, metrics.newCustomers + metrics.returningCustomers)}%,
-                          #f97316 ${pct(metrics.newCustomers, metrics.newCustomers + metrics.returningCustomers)}% 100%
-                        )`,
-                      }}
+                    <DonutChart
+                      value={metrics.newCustomers}
+                      max={metrics.newCustomers + metrics.returningCustomers}
+                      colors={["#3b82f6", "#f97316"]}
                     />
                   ) : (
                     <div className="h-20 w-20 rounded-full bg-muted shrink-0 flex items-center justify-center text-xs text-muted-foreground">

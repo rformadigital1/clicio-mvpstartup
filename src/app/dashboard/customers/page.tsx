@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Users, Trash2, Car, Plus, ExternalLink } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/ui/page-header"
 import type { Customer, Vehicle } from "@/lib/types"
 import Link from "next/link"
 
@@ -155,13 +156,12 @@ export default function CustomersPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Clientes</h1>
+      <PageHeader title="Clientes">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>Nuevo Cliente</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent size="sm">
             <DialogHeader><DialogTitle>Nuevo Cliente</DialogTitle></DialogHeader>
             <form onSubmit={handleAddCustomer} className="space-y-4">
               <div className="space-y-2">
@@ -184,7 +184,7 @@ export default function CustomersPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </PageHeader>
 
       {/* Search */}
       <div className="max-w-sm mb-6">
