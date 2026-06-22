@@ -146,12 +146,31 @@ export default function SettingsPage() {
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!tenant || !e.target.files?.[0]) return
-    setUploadingLogo(true)
+
     const file = e.target.files[0]
+    const maxSize = 2 * 1024 * 1024
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp"]
+
+    if (file.size > maxSize) {
+      toast({ title: "Archivo muy grande", description: "El logo debe pesar máximo 2MB", variant: "destructive" })
+      e.target.value = ""
+      return
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Formato no soportado", description: "Usa PNG, JPG o WebP", variant: "destructive" })
+      e.target.value = ""
+      return
+    }
+
+    setUploadingLogo(true)
     const ext = file.name.split(".").pop()
     const filePath = `${tenant.id}/logo.${ext}`
 
-    const { error: uploadErr } = await supabase.storage.from("logos").upload(filePath, file, { upsert: true })
+    const { error: uploadErr } = await supabase.storage.from("logos").upload(filePath, file, {
+      contentType: file.type,
+      upsert: true,
+    })
     if (uploadErr) {
       toast({ title: "Error al subir logo", description: uploadErr.message, variant: "destructive" })
       setUploadingLogo(false)
@@ -160,12 +179,6 @@ export default function SettingsPage() {
 
     const { data: urlData } = supabase.storage.from("logos").getPublicUrl(filePath)
     const logoUrl = urlData.publicUrl
-
-    if (!logoUrl.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL!)) {
-      toast({ title: "Error", description: "URL de logo inválida", variant: "destructive" })
-      setUploadingLogo(false)
-      return
-    }
 
     const { error: updateErr } = await supabase.from("tenants").update({ logo_url: logoUrl }).eq("id", tenant.id)
     if (updateErr) {

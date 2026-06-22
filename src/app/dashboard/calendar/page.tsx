@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Car } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Search, Pencil } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 
@@ -77,9 +77,29 @@ export default function CalendarPage() {
   const [newVehId, setNewVehId] = useState("__none__")
   const [newServiceIds, setNewServiceIds] = useState<string[]>([])
 
+  // Search
+  const [search, setSearch] = useState("")
+
   // Detail modal
   const [detailBooking, setDetailBooking] = useState<any>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+
+  // Edit modal
+  const [editBooking, setEditBooking] = useState<any>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editDate, setEditDate] = useState("")
+  const [editTime, setEditTime] = useState("")
+  const [editCustId, setEditCustId] = useState("")
+  const [editVehId, setEditVehId] = useState("__none__")
+  const [editServiceIds, setEditServiceIds] = useState<string[]>([])
+
+  // Mobile day view
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(() => {
+    const now = new Date()
+    const ws = getWeekStart(new Date())
+    const diff = Math.floor((now.getTime() - ws.getTime()) / (1000 * 60 * 60 * 24))
+    return diff >= 0 && diff <= 6 ? diff : 0
+  })
 
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadWeek() }, [weekStart, tenantId])
@@ -184,15 +204,25 @@ export default function CalendarPage() {
   const todayStr = fmtDate(new Date())
 
   // Group bookings by day for quick lookup
+  const filteredBookings = useMemo(() => {
+    if (!search.trim()) return bookings
+    const q = search.toLowerCase()
+    return bookings.filter(b =>
+      b.customers?.name?.toLowerCase().includes(q) ||
+      b.customers?.phone?.includes(q) ||
+      b.vehicles?.plate?.toLowerCase().includes(q)
+    )
+  }, [bookings, search])
+
   const bookingsByDay = useMemo(() => {
     const map: Record<string, any[]> = {}
-    for (const b of bookings) {
+    for (const b of filteredBookings) {
       const d = b.booking_date
       if (!map[d]) map[d] = []
       map[d].push(b)
     }
     return map
-  }, [bookings])
+  }, [filteredBookings])
 
   function navPrev() {
     const d = new Date(weekStart)
@@ -217,6 +247,50 @@ export default function CalendarPage() {
     setNewVehId("__none__")
     setNewServiceIds([])
     setNewOpen(true)
+  }
+
+  function openEdit(booking: any) {
+    setEditBooking(booking)
+    setEditDate(booking.booking_date)
+    setEditTime(booking.booking_time?.slice(0, 5) ?? "08:00")
+    setEditCustId(booking.customer_id ?? "")
+    setEditVehId(booking.vehicle_id ?? "__none__")
+    setEditServiceIds(booking.booking_services?.map((bs: any) => bs.service_id) ?? [])
+    setEditOpen(true)
+    setDetailOpen(false)
+  }
+
+  async function handleEditBooking(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!tenantId || !editBooking) return
+    if (editServiceIds.length === 0) { toast({ title: "Selecciona al menos un servicio", variant: "destructive" }); return }
+
+    const check = await checkAvailability(tenantId, editDate, editTime, editServiceIds, editBooking.id)
+    if (!check.available) { toast({ title: "Horario no disponible", description: check.reason, variant: "destructive" }); return }
+
+    const { error } = await supabase.from("bookings").update({
+      customer_id: editCustId,
+      vehicle_id: editVehId && editVehId !== "__none__" ? editVehId : null,
+      booking_date: editDate,
+      booking_time: editTime,
+    }).eq("id", editBooking.id)
+    if (error) { toast({ title: "Error al actualizar", description: error.message, variant: "destructive" }); return }
+
+    await supabase.from("booking_services").delete().eq("booking_id", editBooking.id)
+    await supabase.from("booking_services").insert(
+      editServiceIds.map(sid => ({ booking_id: editBooking.id, service_id: sid }))
+    )
+
+    toast({ title: "Reserva actualizada" })
+    setEditOpen(false)
+    loadWeek()
+  }
+
+  function goToDay(idx: number) {
+    const d = new Date(weekStart)
+    d.setDate(d.getDate() + idx - selectedDayIdx)
+    setWeekStart(getWeekStart(d))
+    setSelectedDayIdx(idx)
   }
 
   async function handleNewBooking(e: React.FormEvent<HTMLFormElement>) {
@@ -310,6 +384,38 @@ export default function CalendarPage() {
         </Button>
       </div>
 
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por cliente, teléfono o patente..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Mobile day pills */}
+      <div className="sm:hidden flex gap-1 mb-3 overflow-x-auto pb-1">
+        {days.map((d, i) => {
+          const ds = fmtDate(d)
+          const isToday = ds === todayStr
+          const isSelected = i === selectedDayIdx
+          return (
+            <button
+              key={i}
+              onClick={() => setSelectedDayIdx(i)}
+              className={`shrink-0 flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors
+                ${isSelected ? "bg-primary text-primary-foreground" : isToday ? "bg-primary/10" : "bg-muted"}
+              `}
+            >
+              <span>{DAY_LABELS[i]}</span>
+              <span className="text-base font-bold">{d.getDate()}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Legend */}
       <div className="flex gap-4 mb-4 text-xs">
         {Object.entries(STATUS_LABELS).map(([key, label]) => (
@@ -320,7 +426,43 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      {/* Calendar Grid */}
+      {/* Mobile Day View */}
+      <div className="sm:hidden">
+        {hours.map((h) => {
+          const slotTime = `${h.toString().padStart(2, "0")}:00`
+          const dayBookings = bookingsByDay[fmtDate(days[selectedDayIdx])]?.filter(
+            (b: any) => b.booking_time?.slice(0, 5) === slotTime
+          ) ?? []
+          return (
+            <div key={h} className="flex border-b min-h-[56px]">
+              <div className="w-14 shrink-0 p-1 text-xs text-muted-foreground text-right pr-2 pt-2 border-r">
+                {slotTime}
+              </div>
+              <div className="flex-1 p-1 relative" onClick={() => handleSlotClick(fmtDate(days[selectedDayIdx]), slotTime)}>
+                <div className="flex flex-col gap-1">
+                  {dayBookings.map((b: any) => {
+                    const status = b.status as BookingStatus
+                    return (
+                      <div
+                        key={b.id}
+                        className="rounded px-2 py-1 text-xs cursor-pointer hover:opacity-80"
+                        style={{ backgroundColor: STATUS_COLORS[status], color: STATUS_TEXT_COLORS[status] }}
+                        onClick={(e) => { e.stopPropagation(); setDetailBooking(b); setDetailOpen(true) }}
+                      >
+                        <span className="font-medium">{b.booking_time?.slice(0, 5)} </span>
+                        <span>{b.customers?.name}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop Calendar Grid */}
+      <div className="hidden sm:block">
       <div className="overflow-x-auto border rounded-lg bg-background">
         <div className="min-w-[700px]">
           {/* Header row: time label + day columns */}
@@ -364,7 +506,7 @@ export default function CalendarPage() {
             ))}
 
             {/* Booking blocks */}
-            {bookings.map((booking) => {
+            {filteredBookings.map((booking) => {
               const { col, topPx, heightPx } = getGridInfo(booking)
               const status = booking.status as BookingStatus
               const servicesList = booking.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean) ?? []
@@ -397,6 +539,7 @@ export default function CalendarPage() {
             })}
           </div>
         </div>
+      </div>
       </div>
 
       {/* New Booking Modal */}
@@ -504,7 +647,70 @@ export default function CalendarPage() {
                   ))}
                 </div>
               </div>
+              <Button variant="outline" className="w-full" onClick={() => openEdit(detailBooking)}>
+                <Pencil className="mr-1 h-4 w-4" /> Editar
+              </Button>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Booking Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar Reserva</DialogTitle></DialogHeader>
+          {editBooking && (
+            <form onSubmit={handleEditBooking} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">Fecha</Label>
+                  <Input id="edit-date" type="date" value={editDate} onChange={e => setEditDate(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-time">Hora</Label>
+                  <Input id="edit-time" type="time" value={editTime} onChange={e => setEditTime(e.target.value)} required />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-customer">Cliente</Label>
+                <Select value={editCustId} onValueChange={setEditCustId} required>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
+                  <SelectContent>
+                    {customers.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}{c.phone ? ` — ${c.phone}` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {editCustId && (
+                <div className="space-y-2">
+                  <Label>Vehículo (opcional)</Label>
+                  <Select value={editVehId} onValueChange={setEditVehId}>
+                    <SelectTrigger><SelectValue placeholder="Sin vehículo" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin vehículo</SelectItem>
+                      {vehicles.filter(v => v.customer_id === editCustId).map(v => (
+                        <SelectItem key={v.id} value={v.id}>{v.plate}{v.brand ? ` - ${v.brand}` : ""}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Servicios</Label>
+                <div className="space-y-1 max-h-48 overflow-y-auto border rounded-lg p-2">
+                  {services.map(s => (
+                    <label key={s.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer">
+                      <input type="checkbox" checked={editServiceIds.includes(s.id)} onChange={() =>
+                        setEditServiceIds(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])
+                      } className="h-4 w-4" />
+                      <span className="text-sm font-medium">{s.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button type="submit" className="w-full">Guardar Cambios</Button>
+            </form>
           )}
         </DialogContent>
       </Dialog>
