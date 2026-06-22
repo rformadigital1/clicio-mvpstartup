@@ -29,8 +29,8 @@ function SortableItem({ id, label, visible, disabled, onToggle }: {
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-3 py-2 px-1 rounded border border-border-subtil bg-white">
-      <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground hover:text-foreground">
+    <div ref={setNodeRef} {...attributes} style={style} className="flex items-center gap-3 py-2 px-1 rounded border border-border-subtil bg-white">
+      <button {...listeners} className="cursor-grab text-muted-foreground hover:text-foreground">
         <GripVertical className="h-4 w-4" />
       </button>
       <span className="flex-1 text-sm">{label}</span>
