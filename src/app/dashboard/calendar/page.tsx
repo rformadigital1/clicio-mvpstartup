@@ -332,15 +332,15 @@ export default function CalendarPage() {
     <div className="animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="text-xl sm:text-2xl font-bold">Calendario</h1>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" onClick={navPrev}><ChevronLeft className="h-4 w-4" /></Button>
             <Button variant="outline" size="sm" onClick={navToday}>Hoy</Button>
             <Button variant="outline" size="icon" onClick={navNext}><ChevronRight className="h-4 w-4" /></Button>
           </div>
-          <span className="text-xs sm:text-sm text-muted-foreground w-full sm:w-auto">
-            {days[0].toLocaleDateString("es-CL", { day: "numeric", month: "long" })} — {days[6].toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
+          <span className="text-sm font-medium text-foreground">
+            Semana del {days[0].toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
           </span>
         </div>
         <Button onClick={() => {
