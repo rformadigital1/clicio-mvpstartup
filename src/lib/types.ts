@@ -7,6 +7,7 @@ export interface Tenant {
   phone: string | null
   email: string | null
   instagram: string | null
+  page_config: PageConfig | null
   created_at: string
   deposit_enabled?: boolean
   deposit_type?: "percent" | "fixed" | null
@@ -124,4 +125,32 @@ export interface StaffInvitation {
   used: boolean
   created_at: string
   expires_at: string
+}
+
+export interface PageConfig {
+  colors: {
+    primary: string
+    secondary: string
+    accent: string
+    background: string
+    cardBg: string
+    text: string
+    buttonBg: string
+    buttonText: string
+  }
+  typography: {
+    headingFont: string
+    bodyFont: string
+  }
+  sections: {
+    id: "quick-buttons" | "services" | "booking-wizard" | "gallery" | "map"
+    visible: boolean
+    order: number
+  }[]
+  buttons: {
+    whatsapp: { visible: boolean; label: string }
+    instagram: { visible: boolean; label: string }
+    servicios: { visible: boolean; label: string }
+    agendar: { visible: boolean; label: string }
+  }
 }
