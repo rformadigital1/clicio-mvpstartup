@@ -7,6 +7,9 @@ export interface Tenant {
   phone: string | null
   email: string | null
   created_at: string
+  deposit_enabled?: boolean
+  deposit_type?: "percent" | "fixed" | null
+  deposit_value?: number | null
 }
 
 export interface Profile {

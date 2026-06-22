@@ -1,19 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Tenant, Service, BusinessHour, Vehicle, GalleryImage } from "@/lib/types"
+import type { Tenant, Service, BusinessHour, GalleryImage } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { checkAvailability } from "@/lib/availability"
+import { BookingWizard } from "@/components/booking/booking-wizard"
 
 export default function TenantSitePage() {
   const { slug } = useParams<{ slug: string }>()
   const supabase = createClient()
+  const wizardRef = useRef<HTMLDivElement>(null)
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [hours, setHours] = useState<BusinessHour[]>([])
@@ -21,32 +18,6 @@ export default function TenantSitePage() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [bookError, setBookError] = useState("")
-  const [bookingOpen, setBookingOpen] = useState(false)
-  const [bookingSuccess, setBookingSuccess] = useState(false)
-  const [existingCustomer, setExistingCustomer] = useState<any>(null)
-  const [customerVehicles, setCustomerVehicles] = useState<Vehicle[]>([])
-  const [selectedVehicleId, setSelectedVehicleId] = useState("new")
-  const [vehPlate, setVehPlate] = useState("")
-  const [vehBrand, setVehBrand] = useState("")
-  const [vehModel, setVehModel] = useState("")
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
-  const [totalPrice, setTotalPrice] = useState(0)
-  const [totalDuration, setTotalDuration] = useState(0)
-
-  function toggleService(s: Service) {
-    setSelectedServiceIds(prev => {
-      if (prev.includes(s.id)) {
-        setTotalPrice(p => p - (s.price ?? 0))
-        setTotalDuration(d => d - (s.duration ?? 0))
-        return prev.filter(id => id !== s.id)
-      } else {
-        setTotalPrice(p => p + (s.price ?? 0))
-        setTotalDuration(d => d + (s.duration ?? 0))
-        return [...prev, s.id]
-      }
-    })
-  }
 
   useEffect(() => {
     if (!slug) return
@@ -76,135 +47,6 @@ export default function TenantSitePage() {
     setHours(hoursRes.data ?? [])
     setGallery(galRes.data ?? [])
     setLoading(false)
-  }
-
-  async function handlePhoneBlur(phone: string) {
-    if (!tenant || phone.length < 6) return
-    const { data } = await supabase
-      .from("customers")
-      .select("*, vehicles(*)")
-      .eq("tenant_id", tenant.id)
-      .eq("phone", phone)
-      .maybeSingle()
-    if (data) {
-      setExistingCustomer(data)
-      setCustomerVehicles(data.vehicles || [])
-      if (data.vehicles?.length > 0) {
-        setSelectedVehicleId(data.vehicles[0].id)
-        setVehPlate("")
-      } else {
-        setSelectedVehicleId("new")
-      }
-    } else {
-      setExistingCustomer(null)
-      setCustomerVehicles([])
-      setSelectedVehicleId("new")
-    }
-  }
-
-  function resetBookingForm() {
-    setExistingCustomer(null)
-    setCustomerVehicles([])
-    setSelectedVehicleId("new")
-    setVehPlate("")
-    setVehBrand("")
-    setVehModel("")
-    setSelectedServiceIds([])
-    setTotalPrice(0)
-    setTotalDuration(0)
-    setBookError("")
-    setBookingSuccess(false)
-  }
-
-  async function handleBooking(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!tenant) return
-    setBookError("")
-
-    const form = new FormData(e.currentTarget)
-
-    if (selectedServiceIds.length === 0) { setBookError("Selecciona al menos un servicio"); return }
-
-    const check = await checkAvailability(tenant.id, form.get("date") as string, form.get("time") as string, selectedServiceIds)
-    if (!check.available) { setBookError(check.reason ?? "Horario no disponible"); return }
-
-    let customerId: string
-    let vehicleId: string | null = null
-
-    if (existingCustomer) {
-      customerId = existingCustomer.id
-      if (selectedVehicleId === "new") {
-        const plate = vehPlate.trim().toUpperCase()
-        if (!plate) { setBookError("Ingresa la patente del vehículo"); return }
-        const { data: newV, error: vehErr } = await supabase.from("vehicles").insert({
-          tenant_id: tenant.id,
-          customer_id: customerId,
-          plate,
-          brand: vehBrand.trim() || null,
-          model: vehModel.trim() || null,
-        }).select().single()
-        if (vehErr || !newV) { setBookError("Error al crear vehículo"); return }
-        vehicleId = newV.id
-      } else {
-        vehicleId = selectedVehicleId
-      }
-    } else {
-      const { data: customer, error: customerErr } = await supabase
-        .from("customers")
-        .insert({
-          tenant_id: tenant.id,
-          name: form.get("name") as string,
-          phone: form.get("phone") as string,
-        })
-        .select()
-        .single()
-
-      if (customerErr || !customer) { setBookError("Error al crear cliente"); return }
-      customerId = customer.id
-
-      const plate = vehPlate.trim().toUpperCase()
-      if (!plate) { setBookError("Ingresa la patente del vehículo"); return }
-      const { data: newV, error: vehErr } = await supabase.from("vehicles").insert({
-        tenant_id: tenant.id,
-        customer_id: customerId,
-        plate,
-        brand: vehBrand.trim() || null,
-        model: vehModel.trim() || null,
-      }).select().single()
-      if (vehErr || !newV) { setBookError("Error al crear vehículo"); return }
-      vehicleId = newV.id
-    }
-
-    const payload: Record<string, any> = {
-      tenant_id: tenant.id,
-      customer_id: customerId,
-      vehicle_id: vehicleId,
-      booking_date: form.get("date") as string,
-      booking_time: form.get("time") as string,
-      status: "reserved",
-    }
-
-    const { data: newBooking, error: bookingErr } = await supabase
-      .from("bookings")
-      .insert(payload)
-      .select()
-      .single()
-
-    if (bookingErr || !newBooking) {
-      setBookError("Error al crear reserva. Intenta de nuevo.")
-      return
-    }
-
-    // Insert booking_services
-    const { error: bsErr } = await supabase.from("booking_services").insert(
-      selectedServiceIds.map(sid => ({ booking_id: newBooking.id, service_id: sid }))
-    )
-    if (bsErr) {
-      setBookError("Error al guardar servicios. Intenta de nuevo.")
-      return
-    }
-
-    setBookingSuccess(true)
   }
 
   if (loading) {
@@ -244,19 +86,21 @@ export default function TenantSitePage() {
 
       <main>
         {/* Hero */}
-        <section className="bg-gradient-to-br from-azul-rey to-celeste-cielo text-white py-12 md:py-20">
+        <section className="bg-gradient-to-br from-azul-rey to-celeste-cielo text-white pt-8 pb-16 md:pt-12 md:pb-20">
           <div className="container text-center">
-            <h2 className="text-3xl md:text-5xl font-bold leading-tight">
+            <h2 className="text-2xl md:text-4xl font-bold">
               {tenant.name}
             </h2>
-            <p className="mt-4 text-lg text-white/80 max-w-md mx-auto">
-              {tenant.address ? `${tenant.address} — ` : ""}Agenda tu hora. Rápido, fácil y sin esperas.
+            <p className="mt-2 text-white/80 max-w-md mx-auto text-sm md:text-base">
+              {tenant.address ? `${tenant.address} — ` : ""}Agenda tu hora. Rápido, fácil.
             </p>
-            <Button size="lg" className="mt-8 bg-white text-azul-rey hover:bg-white/90 font-semibold" onClick={() => setBookingOpen(true)}>
-              Agendar Ahora
-            </Button>
           </div>
         </section>
+
+        {/* Embedded Booking Wizard */}
+        <div ref={wizardRef} className="container -mt-10 relative z-10 pb-8">
+          {tenant && <BookingWizard tenant={tenant} services={services} businessHours={hours} />}
+        </div>
 
         {/* Services */}
         {services.length > 0 && (
@@ -370,7 +214,7 @@ export default function TenantSitePage() {
         <section className="bg-gradient-to-br from-azul-rey to-celeste-cielo text-white py-16 text-center">
           <div className="container">
             <h3 className="text-2xl font-bold mb-4">¿Listo para agendar?</h3>
-            <Button size="lg" className="bg-white text-azul-rey hover:bg-white/90 font-semibold" onClick={() => setBookingOpen(true)}>
+            <Button size="lg" className="bg-white text-azul-rey hover:bg-white/90 font-semibold" onClick={() => wizardRef.current?.scrollIntoView({ behavior: "smooth" })}>
               Agendar Ahora
             </Button>
           </div>
@@ -381,104 +225,6 @@ export default function TenantSitePage() {
       <footer className="border-t border-border-subtil py-8 text-center text-sm text-muted-foreground">
         <div className="container">{tenant.name}{tenant.phone ? ` · ${tenant.phone}` : ""}</div>
       </footer>
-
-      {/* Booking Dialog */}
-      <Dialog open={bookingOpen} onOpenChange={(open) => { setBookingOpen(open); if (!open) resetBookingForm() }}>
-        <DialogContent>
-          {bookingSuccess ? (
-            <div className="text-center py-8">
-              <DialogTitle className="mb-2">¡Reserva confirmada!</DialogTitle>
-              <DialogDescription>
-                Te enviaremos un recordatorio antes de tu visita.
-              </DialogDescription>
-              <Button className="mt-4" onClick={() => { setBookingOpen(false); setBookingSuccess(false) }}>
-                Cerrar
-              </Button>
-            </div>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>Agendar hora</DialogTitle>
-                <DialogDescription>Completa los datos para agendar tu visita.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleBooking} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" name="name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" name="phone" type="tel" required onBlur={(e) => handlePhoneBlur(e.target.value)} />
-                </div>
-                {existingCustomer && customerVehicles.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Vehículo</Label>
-                    <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar vehículo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {customerVehicles.map((v) => (
-                          <SelectItem key={v.id} value={v.id}>
-                            {v.plate} {v.brand ? `- ${v.brand}` : ""} {v.model ?? ""}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="new">+ Agregar otro vehículo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {(selectedVehicleId === "new" || !existingCustomer) && (
-                  <div className="space-y-2">
-                    <Label>Patente *</Label>
-                    <Input value={vehPlate} onChange={(e) => setVehPlate(e.target.value)} placeholder="Ej: ABC123" required />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input value={vehBrand} onChange={(e) => setVehBrand(e.target.value)} placeholder="Marca (opcional)" />
-                      <Input value={vehModel} onChange={(e) => setVehModel(e.target.value)} placeholder="Modelo (opcional)" />
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Label>Servicios</Label>
-                  <div className="space-y-1 max-h-60 overflow-y-auto border rounded-lg p-2">
-                    {services.map((s) => (
-                      <label key={s.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedServiceIds.includes(s.id)}
-                          onChange={() => toggleService(s)}
-                          className="h-4 w-4"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium">{s.name}</span>
-                          {s.duration && <span className="text-xs text-muted-foreground ml-2">{s.duration} min</span>}
-                        </div>
-                        {s.price && <span className="text-sm font-medium whitespace-nowrap">${s.price.toLocaleString("es-CL")}</span>}
-                      </label>
-                    ))}
-                  </div>
-                  {selectedServiceIds.length > 0 && (
-                    <div className="flex justify-between text-sm font-medium pt-1 border-t text-muted-foreground">
-                      <span>{totalDuration > 0 && `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}min`}</span>
-                      <span>Total: ${totalPrice.toLocaleString("es-CL")}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Fecha</Label>
-                  <Input id="date" name="date" type="date" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="time">Hora</Label>
-                  <Input id="time" name="time" type="time" required />
-                </div>
-                {bookError && <p className="text-sm text-destructive">{bookError}</p>}
-                <Button type="submit" className="w-full">Reservar</Button>
-              </form>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* WhatsApp FAB */}
       {tenant.phone && (
