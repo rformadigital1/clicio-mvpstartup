@@ -11,23 +11,23 @@ export const STATUS_LABELS: Record<BookingStatus, string> = {
 export const STATUS_COLORS: Record<BookingStatus, string> = {
   reserved: "#dbeafe",
   waiting: "#fef3c7",
-  in_progress: "#fed7aa",
-  ready: "#bbf7d0",
-  delivered: "#e5e7eb",
+  in_progress: "#fee2e2",
+  ready: "#dcfce7",
+  delivered: "#f3f4f6",
 }
 
 export const STATUS_TEXT_COLORS: Record<BookingStatus, string> = {
-  reserved: "#1e40af",
-  waiting: "#92400e",
-  in_progress: "#9a3412",
+  reserved: "#1a3a8a",
+  waiting: "#b45309",
+  in_progress: "#e3242b",
   ready: "#166534",
-  delivered: "#374151",
+  delivered: "#4b5563",
 }
 
 export const STATUS_BADGE_CLASSES: Record<BookingStatus, string> = {
-  reserved: "bg-blue-100 text-blue-800",
-  waiting: "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-orange-100 text-orange-800",
+  reserved: "bg-azul-rey/10 text-azul-rey",
+  waiting: "bg-amber-100 text-amber-800",
+  in_progress: "bg-rojo/10 text-rojo",
   ready: "bg-green-100 text-green-800",
-  delivered: "bg-gray-100 text-gray-800",
+  delivered: "bg-gray-100 text-gray-700",
 }
