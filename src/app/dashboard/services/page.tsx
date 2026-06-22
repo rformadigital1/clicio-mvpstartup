@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Trash2, Car } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { Service } from "@/lib/types"
 
@@ -19,6 +20,7 @@ export default function ServicesPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadServices()
@@ -45,6 +47,7 @@ export default function ServicesPage() {
 
     if (error) toast({ title: "Error al cargar servicios", description: error.message, variant: "destructive" })
     setServices(data ?? [])
+    setLoading(false)
   }
 
   async function handleAddService(e: React.FormEvent<HTMLFormElement>) {
@@ -72,8 +75,26 @@ export default function ServicesPage() {
     loadServices()
   }
 
+  if (loading) return (
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-10 w-36" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Servicios</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

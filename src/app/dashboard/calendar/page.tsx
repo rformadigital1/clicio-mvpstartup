@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
 import { ChevronLeft, ChevronRight, Plus, Clock, User, Car } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
@@ -66,6 +67,7 @@ export default function CalendarPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [bizHours, setBizHours] = useState<BusinessHour[]>([])
+  const [loading, setLoading] = useState(true)
 
   // New booking modal
   const [newOpen, setNewOpen] = useState(false)
@@ -103,6 +105,7 @@ export default function CalendarPage() {
     setCustomers(cRes.data ?? [])
     setVehicles(vRes.data ?? [])
     setBizHours(hRes.data ?? [])
+    setLoading(false)
   }
 
   async function loadWeek() {
@@ -253,8 +256,34 @@ export default function CalendarPage() {
     loadWeek()
   }
 
+  if (loading) return (
+    <div className="animate-fade-in">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-9 w-20" />
+        </div>
+        <Skeleton className="h-9 w-36" />
+      </div>
+      <div className="rounded-xl border">
+        <div className="flex gap-4 p-4 border-b">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 flex-1" />
+          ))}
+        </div>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} className="flex gap-4 p-4 border-b">
+            {Array.from({ length: 8 }).map((_, j) => (
+              <Skeleton key={j} className="h-6 flex-1" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
         <div className="flex flex-wrap items-center gap-2">

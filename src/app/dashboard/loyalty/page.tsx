@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Trash2, Gift, Star } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import type { LoyaltyRule, Customer } from "@/lib/types"
 
@@ -22,6 +23,7 @@ export default function LoyaltyPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [claimDialogOpen, setClaimDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadData()
@@ -49,6 +51,7 @@ export default function LoyaltyPage() {
     if (cRes.error) toast({ title: "Error al cargar clientes", variant: "destructive" })
     setRules(rRes.data ?? [])
     setCustomers(cRes.data ?? [])
+    setLoading(false)
   }
 
   async function handleAddRule(e: React.FormEvent<HTMLFormElement>) {
@@ -101,8 +104,38 @@ export default function LoyaltyPage() {
     rules.some((r) => c.stamps >= r.required_stamps)
   )
 
+  if (loading) return (
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <Skeleton className="h-8 w-32" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-36" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 max-w-lg mb-8">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-48" />
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-6 w-48 mb-4" />
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-xl border p-4 space-y-2">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Fidelización</h1>
         <div className="flex gap-2 flex-wrap">

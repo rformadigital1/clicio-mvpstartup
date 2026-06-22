@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
 import { Plus, Search, Calendar as CalendarIcon, Pencil } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle } from "@/lib/types"
 import Link from "next/link"
 
@@ -52,6 +53,7 @@ export default function BookingsPage() {
   const [editServiceIds, setEditServiceIds] = useState<string[]>([])
 
   // Filters
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterDateFrom, setFilterDateFrom] = useState("")
@@ -87,6 +89,7 @@ export default function BookingsPage() {
     setCustomers(cRes.data ?? [])
     setServices(sRes.data ?? [])
     setVehicles(vRes.data ?? [])
+    setLoading(false)
   }
 
   async function updateStatus(bookingId: string, status: BookingStatus) {
@@ -201,8 +204,29 @@ export default function BookingsPage() {
     })
   }, [bookings, search, filterStatus, filterDateFrom, filterDateTo])
 
+  if (loading) return (
+    <div className="animate-fade-in">
+      <Skeleton className="h-8 w-32 mb-6" />
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
+        <Skeleton className="h-10 w-full sm:w-64" />
+        <Skeleton className="h-10 w-24" />
+        <Skeleton className="h-10 w-24" />
+        <Skeleton className="h-10 w-24" />
+      </div>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-xl border p-4 flex items-center gap-4 mb-3">
+          <Skeleton className="h-10 w-16 shrink-0" />
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-6 w-20 shrink-0" />
+          <Skeleton className="h-9 w-28 shrink-0" />
+          <Skeleton className="h-9 w-9 shrink-0" />
+        </div>
+      ))}
+    </div>
+  )
+
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold">Agenda</h1>
           <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) setSelectedServiceIds([]) }}>

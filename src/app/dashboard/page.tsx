@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Users, DollarSign, Clock, CheckCircle2, Wrench, CalendarDays } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const statusLabels: Record<string, string> = {
   reserved: "Reservado",
@@ -121,7 +122,33 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  if (loading) return <div className="min-h-[200px] flex items-center justify-center"><p className="text-muted-foreground">Cargando...</p></div>
+  if (loading) return (
+    <div>
+      <Skeleton className="h-8 w-48 mb-6" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-8 w-12" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border p-6 space-y-4">
+        <Skeleton className="h-5 w-36" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    </div>
+  )
 
   const statusCards = [
     { status: "reserved", icon: Clock, color: "text-blue-600" },
@@ -130,7 +157,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
       {/* Top metrics */}

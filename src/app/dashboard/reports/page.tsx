@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { BarChart3, TrendingUp, Clock, AlertCircle, Download } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 function pct(part: number, total: number): number {
   return total > 0 ? (part / total) * 100 : 0
@@ -217,8 +218,32 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <p className="text-muted-foreground">Cargando...</p>
+      <div className="animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <Skeleton className="h-8 w-32" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-16" />
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-9 w-28" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+          <div className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        </div>
+        <div className="rounded-xl border p-6 mt-6 space-y-4">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-8 w-1/2" />
+        </div>
       </div>
     )
   }
@@ -226,7 +251,7 @@ export default function ReportsPage() {
   const years = [year - 1, year, year + 1]
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">Reportes</h1>
         <div className="flex items-center gap-2 flex-wrap">

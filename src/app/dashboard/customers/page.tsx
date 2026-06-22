@@ -13,6 +13,7 @@ import { AlertDialog } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Users, Trash2, Car, Plus, ExternalLink } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Customer, Vehicle } from "@/lib/types"
 import Link from "next/link"
 
@@ -24,6 +25,7 @@ export default function CustomersPage() {
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [vehicleDialogOpen, setVehicleDialogOpen] = useState(false)
@@ -61,6 +63,7 @@ export default function CustomersPage() {
       .select("*")
       .eq("tenant_id", profile.tenant_id)
     setVehicles(vehData ?? [])
+    setLoading(false)
   }
 
   async function handleAddCustomer(e: React.FormEvent<HTMLFormElement>) {
@@ -130,8 +133,28 @@ export default function CustomersPage() {
     )
   }, [customers, search])
 
+  if (loading) return (
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-10 w-36" />
+      </div>
+      <Skeleton className="h-10 w-full max-w-sm mb-6" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-xl border p-6 space-y-3">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Clientes</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
