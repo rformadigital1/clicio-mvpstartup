@@ -155,8 +155,8 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                       isActive
-                        ? "bg-accent text-accent-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-white text-azul-rey font-medium border-l-2 border-azul-rey rounded-none rounded-r-lg"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
