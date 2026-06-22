@@ -86,7 +86,7 @@ export default function TenantSitePage() {
 
       <main>
         {/* Hero */}
-        <section className="bg-gradient-to-br from-azul-rey to-celeste-cielo text-white pt-8 pb-16 md:pt-12 md:pb-20">
+        <section className="bg-gradient-to-br from-azul-rey to-celeste-cielo text-white pt-8 pb-8 md:pt-12 md:pb-12">
           <div className="container text-center">
             <h2 className="text-2xl md:text-4xl font-bold">
               {tenant.name}
@@ -98,7 +98,7 @@ export default function TenantSitePage() {
         </section>
 
         {/* Embedded Booking Wizard */}
-        <div ref={wizardRef} className="container -mt-10 relative z-10 pb-8">
+        <div ref={wizardRef} className="container py-8">
           {tenant && <BookingWizard tenant={tenant} services={services} businessHours={hours} />}
         </div>
 

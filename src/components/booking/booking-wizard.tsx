@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,13 +9,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { checkAvailability } from "@/lib/availability"
 import { getCalendarGrid, getAvailableSlots } from "@/lib/calendar-utils"
 import { WizardProgress } from "@/components/booking/wizard-progress"
-import { ChevronLeft, ChevronRight, Loader2, Calendar, Clock, CheckCircle } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Calendar, Clock, CheckCircle, Sparkles } from "lucide-react"
 import type { Tenant, Service, BusinessHour } from "@/lib/types"
 
 interface BookingWizardProps {
   tenant: Tenant
   services: Service[]
   businessHours: BusinessHour[]
+}
+
+function isSlotOccupied(slotTime: string, bookings: any[]): boolean {
+  const [slotH, slotM] = slotTime.split(":").map(Number)
+  const slotStart = slotH * 60 + slotM
+  const slotEnd = slotStart + 30
+  for (const b of bookings) {
+    if (!b.booking_time) continue
+    const [bH, bM] = b.booking_time.split(":").map(Number)
+    const bStart = bH * 60 + bM
+    let bDuration = 60
+    if (b.booking_services?.length > 0) {
+      bDuration = b.booking_services.reduce((sum: number, bs: any) => sum + (bs.services?.duration ?? 30), 0)
+    }
+    if (slotStart < bStart + bDuration && slotEnd > bStart) return true
+  }
+  return false
 }
 
 export function BookingWizard({ tenant, services, businessHours }: BookingWizardProps) {
@@ -42,7 +59,7 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
-  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [loadingMonth, setLoadingMonth] = useState(true)
 
   const now = new Date()
   const todayStr = now.toISOString().slice(0, 10)
@@ -52,6 +69,7 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
   }, [year, month])
 
   async function loadBlockedAndBookings() {
+    setLoadingMonth(true)
     const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`
     const monthEnd = new Date(year, month + 1, 0).toISOString().slice(0, 10)
 
@@ -67,6 +85,7 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
     ])
     setBlockedDates((blockedRes.data ?? []).map((b: any) => b.date))
     setMonthBookings(bookingsRes.data ?? [])
+    setLoadingMonth(false)
   }
 
   const dayBookings = useMemo(() => {
@@ -77,8 +96,8 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
   const availableSlots = useMemo(() => {
     if (!selectedDate) return []
     const slots = getAvailableSlots(selectedDate, businessHours, blockedDates)
-    return slots
-  }, [selectedDate, businessHours, blockedDates])
+    return slots.filter((slot) => !isSlotOccupied(slot, dayBookings))
+  }, [selectedDate, businessHours, blockedDates, dayBookings])
 
   const calendarDays = useMemo(() => {
     const grid = getCalendarGrid(year, month)
@@ -88,9 +107,12 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
       const dow = new Date(yr, mo - 1, dy).getDay()
       const hasHours = businessHours.some((h) => h.day_of_week === dow && h.is_open)
       const isBlocked = blockedDates.includes(day.date)
-      return { ...day, isAvailable: hasHours && !isBlocked }
+      const dayBks = monthBookings.filter((b: any) => b.booking_date === day.date)
+      const slots = hasHours && !isBlocked ? getAvailableSlots(day.date, businessHours, blockedDates) : []
+      const hasFreeSlots = slots.some((slot) => !isSlotOccupied(slot, dayBks))
+      return { ...day, isAvailable: hasFreeSlots }
     })
-  }, [year, month, businessHours, blockedDates])
+  }, [year, month, businessHours, blockedDates, monthBookings])
 
   function toggleService(s: Service) {
     setSelectedServiceIds((prev) => {
@@ -203,18 +225,39 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
   }
 
   if (success) {
+    const selServices = services.filter((s) => selectedServiceIds.includes(s.id))
     return (
-      <div className="bg-white rounded-xl border border-border-subtil shadow-sm p-8 text-center">
-        <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-        <h3 className="text-xl font-bold mb-2">¡Reserva confirmada!</h3>
-        <p className="text-muted-foreground mb-1">Te enviaremos un recordatorio antes de tu visita.</p>
-        {tenant.deposit_enabled && (
-          <p className="text-sm text-azul-rey font-medium mt-3">
-            {tenant.deposit_type === "percent"
-              ? `Abono: ${tenant.deposit_value}% = $${Math.round(totalPrice * (tenant.deposit_value ?? 0) / 100).toLocaleString("es-CL")}`
-              : `Abono: $${(tenant.deposit_value ?? 0).toLocaleString("es-CL")}`}
-          </p>
-        )}
+      <div className="bg-white rounded-xl border border-border-subtil shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-green-600 to-green-500 p-6 sm:p-8 text-center text-white">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/20 mb-4 animate-bounce">
+            <CheckCircle className="h-8 w-8" />
+          </div>
+          <h3 className="text-xl font-bold">¡Reserva confirmada!</h3>
+          <p className="text-white/80 mt-1">Te enviaremos un recordatorio antes de tu visita.</p>
+        </div>
+        <div className="p-5 sm:p-8 space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Fecha</span>
+            <span className="font-medium">{formatDateDisplay(selectedDate)} — {selectedTime} hrs</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Servicios</span>
+            <span className="font-medium">{selServices.map((s) => s.name).join(", ")}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-bold text-azul-rey">${totalPrice.toLocaleString("es-CL")}</span>
+          </div>
+          {tenant.deposit_enabled && (
+            <div className="bg-azul-rey/5 rounded-lg p-3 mt-2 text-center">
+              <p className="font-medium text-azul-rey">
+                {tenant.deposit_type === "percent"
+                  ? `Abono: ${tenant.deposit_value}% = $${Math.round(totalPrice * (tenant.deposit_value ?? 0) / 100).toLocaleString("es-CL")}`
+                  : `Abono: $${(tenant.deposit_value ?? 0).toLocaleString("es-CL")}`}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     )
   }
@@ -233,89 +276,102 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
       {/* Step 1: Calendar */}
       {step === 1 && (
         <div>
-          <div className="flex items-center justify-between mb-5">
-            <button
-              onClick={() => { if (month > 0 || year > 2024) { const ny = month === 0 ? year - 1 : year; setMonth(month === 0 ? 11 : month - 1); setYear(ny) } }}
-              className="p-1.5 rounded-lg hover:bg-bg-superficie transition-colors"
-              aria-label="Mes anterior"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <span className="font-semibold text-sm">
-              {new Date(year, month).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}
-            </span>
-            <button
-              onClick={() => { const ny = month === 11 ? year + 1 : year; setMonth(month === 11 ? 0 : month + 1); setYear(ny) }}
-              className="p-1.5 rounded-lg hover:bg-bg-superficie transition-colors"
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center mb-2">
-            {["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map((d) => (
-              <span key={d} className="text-xs font-medium text-muted-foreground py-1">{d}</span>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map((day, i) => {
-              const isSelected = day.date === selectedDate
-              const clickable = day.isCurrentMonth && day.isAvailable && !day.isPast
-              return (
-                <button
-                  key={i}
-                  disabled={!clickable}
-                  onClick={() => {
-                    if (clickable) {
-                      setSelectedDate(day.date)
-                      setSelectedTime("")
-                    }
-                  }}
-                  className={`aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
-                    isSelected
-                      ? "bg-azul-rey text-white"
-                      : clickable
-                        ? "hover:bg-azul-rey/10 cursor-pointer text-foreground"
-                        : "text-muted-foreground/40 cursor-default"
-                  } ${day.isToday && !isSelected ? "ring-1 ring-azul-rey/30" : ""}`}
-                >
-                  {day.dayOfMonth}
-                </button>
-              )
-            })}
-          </div>
-
-          {selectedDate && (
-            <div className="mt-6">
-              <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-azul-rey" />
-                Horas disponibles — {formatDateDisplay(selectedDate)}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {availableSlots.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sin horas disponibles este día</p>
-                ) : (
-                  availableSlots.map((slot) => {
-                    const isSlotSelected = slot === selectedTime
-                    return (
-                      <button
-                        key={slot}
-                        onClick={() => setSelectedTime(slot)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                          isSlotSelected
-                            ? "border-azul-rey bg-azul-rey/10 text-azul-rey"
-                            : "border-border-subtil hover:border-azul-rey/40 text-foreground"
-                        }`}
-                      >
-                        {slot}
-                      </button>
-                    )
-                  })
-                )}
+          {loadingMonth ? (
+            <div className="space-y-3 py-4">
+              <div className="h-5 w-48 bg-bg-superficie rounded animate-pulse mx-auto" />
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: 35 }).map((_, i) => (
+                  <div key={i} className="aspect-square rounded-lg bg-bg-superficie animate-pulse" />
+                ))}
               </div>
             </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-5">
+                <button
+                  onClick={() => { if (month > 0 || year > 2024) { const ny = month === 0 ? year - 1 : year; setMonth(month === 0 ? 11 : month - 1); setYear(ny) } }}
+                  className="p-1.5 rounded-lg hover:bg-bg-superficie transition-colors"
+                  aria-label="Mes anterior"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <span className="font-semibold text-sm">
+                  {new Date(year, month).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}
+                </span>
+                <button
+                  onClick={() => { const ny = month === 11 ? year + 1 : year; setMonth(month === 11 ? 0 : month + 1); setYear(ny) }}
+                  className="p-1.5 rounded-lg hover:bg-bg-superficie transition-colors"
+                  aria-label="Mes siguiente"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                {["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map((d) => (
+                  <span key={d} className="text-xs font-medium text-muted-foreground py-1">{d}</span>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day, i) => {
+                  const isSelected = day.date === selectedDate
+                  const clickable = day.isCurrentMonth && day.isAvailable && !day.isPast
+                  return (
+                    <button
+                      key={i}
+                      disabled={!clickable}
+                      onClick={() => {
+                        if (clickable) {
+                          setSelectedDate(day.date)
+                          setSelectedTime("")
+                        }
+                      }}
+                      className={`aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
+                        isSelected
+                          ? "bg-azul-rey text-white"
+                          : clickable
+                            ? "hover:bg-azul-rey/10 cursor-pointer text-foreground"
+                            : "text-muted-foreground/40 cursor-default"
+                      } ${day.isToday && !isSelected ? "ring-1 ring-azul-rey/30" : ""}`}
+                    >
+                      {day.dayOfMonth}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {selectedDate && (
+                <div className="mt-6">
+                  <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-azul-rey" />
+                    Horas disponibles — {formatDateDisplay(selectedDate)}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableSlots.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Sin horas disponibles este día</p>
+                    ) : (
+                      availableSlots.map((slot) => {
+                        const isSlotSelected = slot === selectedTime
+                        return (
+                          <button
+                            key={slot}
+                            onClick={() => setSelectedTime(slot)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                              isSlotSelected
+                                ? "border-azul-rey bg-azul-rey/10 text-azul-rey"
+                                : "border-border-subtil hover:border-azul-rey/40 text-foreground"
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
