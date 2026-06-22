@@ -399,7 +399,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={booking.id}
-                  className="absolute left-0 right-0 mx-1 rounded px-1 sm:px-2 py-1 text-[10px] sm:text-xs overflow-hidden cursor-pointer border hover:opacity-80 transition-opacity z-20"
+                  className="absolute left-0 right-0 mx-1 rounded px-1 sm:px-2 py-1 text-[10px] sm:text-xs overflow-hidden cursor-pointer border hover:opacity-80 transition-opacity z-20 shadow-sm"
                   title={`${booking.booking_time?.slice(0, 5)} — ${booking.customers?.name}${serviceName ? ` (${serviceName})` : ""}`}
                   style={{
                     top: topPx,
@@ -408,7 +408,7 @@ export default function CalendarPage() {
                     width: `calc((100% - 60px) / 7 - 8px)`,
                     backgroundColor: STATUS_COLORS[status] ?? "#e5e7eb",
                     color: STATUS_TEXT_COLORS[status] ?? "#374151",
-                    borderColor: STATUS_TEXT_COLORS[status] ?? "#374151",
+                    borderLeft: `3px solid ${STATUS_TEXT_COLORS[status] ?? "#374151"}`,
                   }}
                   onClick={(e) => { e.stopPropagation(); setDetailBooking(booking); setDetailOpen(true) }}
                 >
