@@ -10,6 +10,7 @@ create table if not exists tenants (
   address text,
   phone text,
   email text,
+  instagram text,
   created_at timestamptz default now()
 );
 

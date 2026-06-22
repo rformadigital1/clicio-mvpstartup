@@ -6,6 +6,7 @@ export interface Tenant {
   address: string | null
   phone: string | null
   email: string | null
+  instagram: string | null
   created_at: string
   deposit_enabled?: boolean
   deposit_type?: "percent" | "fixed" | null
