@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ToastProvider } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Calendar, Users, Car, Settings, LayoutDashboard, Gift, LogOut, Menu, UserCog, BarChart3 } from "lucide-react"
+import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, UserCog, BarChart3 } from "lucide-react"
 import { useState, useEffect, createContext, useContext } from "react"
 
 type RoleInfo = {
@@ -37,7 +37,6 @@ const navItems = [
   { href: "/dashboard/reports", label: "Reportes", icon: BarChart3, ownerOnly: false },
   { href: "/dashboard/customers", label: "Clientes", icon: Users, ownerOnly: false },
   { href: "/dashboard/services", label: "Servicios", icon: Car, ownerOnly: true },
-  { href: "/dashboard/loyalty", label: "Fidelización", icon: Gift, ownerOnly: true },
   { href: "/dashboard/settings", label: "Configuración", icon: Settings, ownerOnly: true },
   { href: "/dashboard/settings?tab=staff", label: "Equipo", icon: UserCog, ownerOnly: true },
 ]
@@ -86,7 +85,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
   const filteredNav = navItems.filter(item => !item.ownerOnly || roleInfo?.isOwner)
 
-  const staffRestricted = ["/dashboard/services", "/dashboard/loyalty", "/dashboard/settings"]
+  const staffRestricted = ["/dashboard/services", "/dashboard/settings"]
   if (!loading && roleInfo && !roleInfo.isOwner && staffRestricted.includes(pathname)) {
     return <RedirectToDashboard />
   }

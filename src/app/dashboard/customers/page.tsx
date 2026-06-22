@@ -229,7 +229,6 @@ export default function CustomersPage() {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
-                  <p className="font-medium">Sellos: {customer.stamps} ⭐</p>
                   <Separator className="my-2" />
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Vehículos</span>
