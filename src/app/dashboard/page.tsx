@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Wrench, CheckCircle2, Calendar } from "lucide-react"
+import { Clock, Wrench, CheckCircle2, Calendar, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { BookingStatus } from "@/lib/types"
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_TEXT_COLORS } from "@/lib/booking-constants"
@@ -16,6 +16,10 @@ export default function DashboardPage() {
   const [tenantName, setTenantName] = useState("")
   const [todayBookings, setTodayBookings] = useState<any[]>([])
   const [todayCounts, setTodayCounts] = useState<Record<string, number>>({})
+  const [monthRevenue, setMonthRevenue] = useState(0)
+  const [prevMonthRevenue, setPrevMonthRevenue] = useState(0)
+  const [monthBookings, setMonthBookings] = useState(0)
+  const [totalCustomers, setTotalCustomers] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadData() }, [])
@@ -53,6 +57,7 @@ export default function DashboardPage() {
     }
 
     const today = new Date().toISOString().slice(0, 10)
+    const now = new Date()
 
     const { data: bookings } = await supabase
       .from("bookings")
@@ -65,6 +70,53 @@ export default function DashboardPage() {
     bookings?.forEach((b) => { counts[b.status] = (counts[b.status] || 0) + 1 })
     setTodayCounts(counts)
     setTodayBookings(bookings ?? [])
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const { data: monthData } = await supabase
+      .from("bookings")
+      .select("status, booking_services(service_id, services(price)), services(price)")
+      .eq("tenant_id", tid)
+      .gte("created_at", monthStart)
+
+    let revenue = 0
+    monthData?.forEach((b: any) => {
+      if (b.status === "delivered") {
+        if (b.booking_services?.length > 0) {
+          revenue += b.booking_services.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+        } else {
+          revenue += b.services?.price ?? 0
+        }
+      }
+    })
+    setMonthRevenue(revenue)
+    setMonthBookings(monthData?.length ?? 0)
+
+    // Previous month revenue
+    const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const { data: prevData } = await supabase
+      .from("bookings")
+      .select("booking_services(service_id, services(price)), services(price)")
+      .eq("tenant_id", tid)
+      .eq("status", "delivered")
+      .gte("created_at", prevD.toISOString())
+      .lte("created_at", new Date(now.getFullYear(), now.getMonth(), 0).toISOString())
+
+    let prevRev = 0
+    prevData?.forEach((b: any) => {
+      if (b.booking_services?.length > 0) {
+        prevRev += b.booking_services.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+      } else {
+        prevRev += b.services?.price ?? 0
+      }
+    })
+    setPrevMonthRevenue(prevRev)
+
+    const { count: custCount } = await supabase
+      .from("customers")
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_id", tid)
+    setTotalCustomers(custCount ?? 0)
+
     setLoading(false)
   }
 
@@ -168,6 +220,36 @@ export default function DashboardPage() {
             <TimelineCard key={slot.data.id} booking={slot.data} currentMinutes={currentMinutes} />
           )
         )}
+      </div>
+
+      {/* Monthly metrics */}
+      <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Reservas del mes</p>
+          <p className="text-xl font-bold">{monthBookings}</p>
+        </div>
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Ingresos del mes</p>
+          <p className="text-xl font-bold">${monthRevenue.toLocaleString("es-CL")}</p>
+          {(() => {
+            const delta = prevMonthRevenue > 0 ? ((monthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : null
+            if (delta === null) return null
+            return (
+              <p className={`text-xs mt-0.5 flex items-center gap-0.5 ${delta >= 0 ? "text-green-700" : "text-rojo"}`}>
+                {delta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {Math.abs(Math.round(delta))}% vs mes ant.
+              </p>
+            )
+          })()}
+        </div>
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Clientes</p>
+          <p className="text-xl font-bold">{totalCustomers}</p>
+        </div>
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Ticket promedio</p>
+          <p className="text-xl font-bold">${monthBookings > 0 ? Math.round(monthRevenue / monthBookings).toLocaleString("es-CL") : "0"}</p>
+        </div>
       </div>
     </div>
   )
