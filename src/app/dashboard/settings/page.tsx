@@ -94,6 +94,7 @@ export default function SettingsPage() {
         address: form.get("address") as string,
         phone: form.get("phone") as string,
         email: form.get("email") as string,
+        instagram: form.get("instagram") as string,
         slug: form.get("slug") as string,
       })
       .eq("id", tenant.id)
@@ -242,6 +243,10 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" name="email" type="email" defaultValue={tenant.email ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagram">Instagram</Label>
+              <Input id="instagram" name="instagram" defaultValue={tenant.instagram ?? ""} placeholder="https://instagram.com/tucuenta" />
             </div>
             <div className="space-y-2">
               <Label>Logo del taller</Label>
