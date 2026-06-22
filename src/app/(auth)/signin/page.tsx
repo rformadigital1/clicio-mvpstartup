@@ -41,7 +41,7 @@ function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 animated-gradient">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link href="/" className="text-xl font-bold block mb-2">CLICIO</Link>

@@ -12,6 +12,11 @@
   to { opacity: 1; }
 }
 
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -29,6 +34,11 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.965 0 0);
   --accent-foreground: oklch(0.205 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
 }
 
@@ -88,5 +98,13 @@
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  .animated-gradient {
+    background: linear-gradient(-45deg, #003399, #38bdf8, #dc2626, #003399);
+    background-size: 400% 400%;
+    animation: gradient-shift 15s ease infinite;
   }
 }

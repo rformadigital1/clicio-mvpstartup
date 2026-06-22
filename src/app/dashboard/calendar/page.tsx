@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Search, Pencil } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 
@@ -77,9 +77,6 @@ export default function CalendarPage() {
   const [newVehId, setNewVehId] = useState("__none__")
   const [newServiceIds, setNewServiceIds] = useState<string[]>([])
 
-  // Search
-  const [search, setSearch] = useState("")
-
   // Detail modal
   const [detailBooking, setDetailBooking] = useState<any>(null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -92,14 +89,6 @@ export default function CalendarPage() {
   const [editCustId, setEditCustId] = useState("")
   const [editVehId, setEditVehId] = useState("__none__")
   const [editServiceIds, setEditServiceIds] = useState<string[]>([])
-
-  // Mobile day view
-  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(() => {
-    const now = new Date()
-    const ws = getWeekStart(new Date())
-    const diff = Math.floor((now.getTime() - ws.getTime()) / (1000 * 60 * 60 * 24))
-    return diff >= 0 && diff <= 6 ? diff : 0
-  })
 
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadWeek() }, [weekStart, tenantId])
@@ -204,25 +193,15 @@ export default function CalendarPage() {
   const todayStr = fmtDate(new Date())
 
   // Group bookings by day for quick lookup
-  const filteredBookings = useMemo(() => {
-    if (!search.trim()) return bookings
-    const q = search.toLowerCase()
-    return bookings.filter(b =>
-      b.customers?.name?.toLowerCase().includes(q) ||
-      b.customers?.phone?.includes(q) ||
-      b.vehicles?.plate?.toLowerCase().includes(q)
-    )
-  }, [bookings, search])
-
   const bookingsByDay = useMemo(() => {
     const map: Record<string, any[]> = {}
-    for (const b of filteredBookings) {
+    for (const b of bookings) {
       const d = b.booking_date
       if (!map[d]) map[d] = []
       map[d].push(b)
     }
     return map
-  }, [filteredBookings])
+  }, [bookings])
 
   function navPrev() {
     const d = new Date(weekStart)
@@ -284,13 +263,6 @@ export default function CalendarPage() {
     toast({ title: "Reserva actualizada" })
     setEditOpen(false)
     loadWeek()
-  }
-
-  function goToDay(idx: number) {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + idx - selectedDayIdx)
-    setWeekStart(getWeekStart(d))
-    setSelectedDayIdx(idx)
   }
 
   async function handleNewBooking(e: React.FormEvent<HTMLFormElement>) {
@@ -384,38 +356,6 @@ export default function CalendarPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por cliente, teléfono o patente..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {/* Mobile day pills */}
-      <div className="sm:hidden flex gap-1 mb-3 overflow-x-auto pb-1">
-        {days.map((d, i) => {
-          const ds = fmtDate(d)
-          const isToday = ds === todayStr
-          const isSelected = i === selectedDayIdx
-          return (
-            <button
-              key={i}
-              onClick={() => setSelectedDayIdx(i)}
-              className={`shrink-0 flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors
-                ${isSelected ? "bg-primary text-primary-foreground" : isToday ? "bg-primary/10" : "bg-muted"}
-              `}
-            >
-              <span>{DAY_LABELS[i]}</span>
-              <span className="text-base font-bold">{d.getDate()}</span>
-            </button>
-          )
-        })}
-      </div>
-
       {/* Legend */}
       <div className="flex gap-4 mb-4 text-xs">
         {Object.entries(STATUS_LABELS).map(([key, label]) => (
@@ -426,43 +366,7 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      {/* Mobile Day View */}
-      <div className="sm:hidden">
-        {hours.map((h) => {
-          const slotTime = `${h.toString().padStart(2, "0")}:00`
-          const dayBookings = bookingsByDay[fmtDate(days[selectedDayIdx])]?.filter(
-            (b: any) => b.booking_time?.slice(0, 5) === slotTime
-          ) ?? []
-          return (
-            <div key={h} className="flex border-b min-h-[56px]">
-              <div className="w-14 shrink-0 p-1 text-xs text-muted-foreground text-right pr-2 pt-2 border-r">
-                {slotTime}
-              </div>
-              <div className="flex-1 p-1 relative" onClick={() => handleSlotClick(fmtDate(days[selectedDayIdx]), slotTime)}>
-                <div className="flex flex-col gap-1">
-                  {dayBookings.map((b: any) => {
-                    const status = b.status as BookingStatus
-                    return (
-                      <div
-                        key={b.id}
-                        className="rounded px-2 py-1 text-xs cursor-pointer hover:opacity-80"
-                        style={{ backgroundColor: STATUS_COLORS[status], color: STATUS_TEXT_COLORS[status] }}
-                        onClick={(e) => { e.stopPropagation(); setDetailBooking(b); setDetailOpen(true) }}
-                      >
-                        <span className="font-medium">{b.booking_time?.slice(0, 5)} </span>
-                        <span>{b.customers?.name}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Desktop Calendar Grid */}
-      <div className="hidden sm:block">
+      {/* Calendar Grid */}
       <div className="overflow-x-auto border rounded-lg bg-background">
         <div className="min-w-[700px]">
           {/* Header row: time label + day columns */}
@@ -506,7 +410,7 @@ export default function CalendarPage() {
             ))}
 
             {/* Booking blocks */}
-            {filteredBookings.map((booking) => {
+            {bookings.map((booking) => {
               const { col, topPx, heightPx } = getGridInfo(booking)
               const status = booking.status as BookingStatus
               const servicesList = booking.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean) ?? []
@@ -539,7 +443,6 @@ export default function CalendarPage() {
             })}
           </div>
         </div>
-      </div>
       </div>
 
       {/* New Booking Modal */}
