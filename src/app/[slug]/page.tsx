@@ -215,7 +215,7 @@ export default function TenantSitePage() {
   }
 
   return (
-    <div className="min-h-screen" style={pageStyle}>
+    <div className="min-h-screen bg-[var(--page-bg)]" style={pageStyle}>
       <main className="max-w-lg mx-auto px-4 py-10">
         {/* Logo + Name */}
         <div className="text-center mb-8">
