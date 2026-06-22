@@ -615,18 +615,25 @@ using (
 );
 
 -- 17. STORAGE: logos bucket
-create policy "logos_public_select"
+create policy "logos_select_public"
 on storage.objects for select to anon
 using (bucket_id = 'logos');
 
-create policy "logos_authenticated_insert"
+create policy "logos_select_own_tenant"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'logos'
+  and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+);
+
+create policy "logos_insert_own_tenant"
 on storage.objects for insert to authenticated
 with check (
   bucket_id = 'logos'
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
 );
 
-create policy "logos_authenticated_update"
+create policy "logos_update_own_tenant"
 on storage.objects for update to authenticated
 using (
   bucket_id = 'logos'
@@ -637,7 +644,7 @@ with check (
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
 );
 
-create policy "logos_authenticated_delete"
+create policy "logos_delete_own_tenant"
 on storage.objects for delete to authenticated
 using (
   bucket_id = 'logos'
