@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ToastProvider } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, UserCog, BarChart3, List } from "lucide-react"
+import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, UserCog, BarChart3, List, ExternalLink } from "lucide-react"
 import { useState, useEffect, createContext, useContext } from "react"
 
 type RoleInfo = {
@@ -49,6 +49,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [roleInfo, setRoleInfo] = useState<RoleInfo | null>(null)
   const [tenantLogo, setTenantLogo] = useState<string | null>(null)
+  const [tenantSlug, setTenantSlug] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const router = useRouter()
@@ -71,10 +72,10 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       setRoleInfo({ isOwner: profile.role === "owner", role: profile.role, email: profile.email })
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("logo_url")
+        .select("logo_url, slug")
         .eq("id", profile.tenant_id)
         .single()
-      if (tenant) setTenantLogo(tenant.logo_url)
+      if (tenant) { setTenantLogo(tenant.logo_url); setTenantSlug(tenant.slug) }
     }
     setLoading(false)
   }
@@ -128,9 +129,18 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                   <DropdownMenuLabel>{roleInfo.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {roleInfo.isOwner && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/settings">Configuración</Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/settings">Configuración</Link>
+                      </DropdownMenuItem>
+                      {tenantSlug && (
+                        <DropdownMenuItem asChild>
+                          <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="mr-2 h-4 w-4" /> Ver Perfil
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                    </>
                   )}
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
@@ -165,8 +175,21 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 )
-              })}
+                })}
             </nav>
+            {tenantSlug && roleInfo?.isOwner && (
+              <div className="px-4 mt-auto mb-4">
+                <a
+                  href={`/${tenantSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-azul-rey transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Ver Perfil Público
+                </a>
+              </div>
+            )}
           </aside>
           <main className="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden">{children}</main>
         </div>
