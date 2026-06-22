@@ -127,30 +127,36 @@ export interface StaffInvitation {
   expires_at: string
 }
 
+export type PageColors = {
+  primary: string
+  secondary: string
+  accent: string
+  background: string
+  cardBg: string
+  text: string
+  buttonBg: string
+  buttonText: string
+}
+
+export type PageButtons = {
+  whatsapp: { visible: boolean; label: string }
+  instagram: { visible: boolean; label: string }
+  servicios: { visible: boolean; label: string }
+  agendar: { visible: boolean; label: string }
+}
+
+export type PageSection = {
+  id: "quick-buttons" | "services" | "booking-wizard" | "gallery" | "map"
+  visible: boolean
+  order: number
+}
+
 export interface PageConfig {
-  colors: {
-    primary: string
-    secondary: string
-    accent: string
-    background: string
-    cardBg: string
-    text: string
-    buttonBg: string
-    buttonText: string
-  }
+  colors: PageColors
   typography: {
     headingFont: string
     bodyFont: string
   }
-  sections: {
-    id: "quick-buttons" | "services" | "booking-wizard" | "gallery" | "map"
-    visible: boolean
-    order: number
-  }[]
-  buttons: {
-    whatsapp: { visible: boolean; label: string }
-    instagram: { visible: boolean; label: string }
-    servicios: { visible: boolean; label: string }
-    agendar: { visible: boolean; label: string }
-  }
+  sections: PageSection[]
+  buttons: PageButtons
 }
