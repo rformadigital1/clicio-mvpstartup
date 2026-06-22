@@ -4,18 +4,23 @@
 
 - **Human:** Dueño de taller automotriz o staff. Abre la app desde su teléfono/tablet entre trabajos. Antes estuvo con un cliente, después pasará al taller. Quiere respuestas rápidas: "quién viene hoy", "qué falta", "estado del trabajo".
 - **Task:** Gestionar agenda diaria, registrar clientes, avanzar bookings por el flujo del taller.
-- **Feel:** Industrial but approachable. Como tablero de taller bien organizado — concreto, metal, limpio. Naranja/azul como acentos de herramientas profesionales.
+- **Feel:** Industrial but approachable. Como tablero de taller bien organizado — concreto limpio, herramientas profesionales. Inspiración BMW M: azul rey, celeste cielo, rojo.
 
 ## Token Architecture
 
-### Colors
-Tokens definidos en `globals.css` via OKLCH. Sin hex values sueltos en páginas.
+### Brand Colors (globals.css)
+- `--color-azul-rey` `#1A3A8A` — Primary, buttons, links, active states
+- `--color-celeste-cielo` `#4A90D9` — Secondary, hover, highlights
+- `--color-rojo` `#E3242B` — Destructive, in_progress status, alerts
 
+### Neutral
+- `--color-bg-concreto` `#F7F5F3` — Page background
+- `--color-bg-superficie` `#F0EEEC` — Card/surface background
+- `--color-border-subtil` `#E2E0DE` — Low emphasis borders
+- `--color-border-medio` `#D4D2D0` — Standard borders
+
+### Standard shadcn CSS vars
 - `--background`, `--foreground` + hierarchy (`--muted-foreground`, etc.)
-- `--primary` + `--primary-foreground`
-- `--accent` + `--accent-foreground` (sidebar active, highlights)
-- `--destructive` + `--destructive-foreground`
-- `--border` / `--input` / `--ring`
 
 ### Status Colors
 Definidos en `src/lib/booking-constants.ts`. Tres formatos:
@@ -26,8 +31,9 @@ Definidos en `src/lib/booking-constants.ts`. Tres formatos:
 Usar siempre desde el import, nunca inline.
 
 ### Typography
-- Font: Geist Sans (body), Geist Mono (data/monospace)
-- Hierarchy: size + weight + tracking, no solo size
+- Body: Inter (--font-sans)
+- Data/Monospace: JetBrains Mono (--font-mono) — tabular numbers, prices, times
+- Display: Playfair Display italic (--font-display) — workshop name on dashboard hero
 
 ### Spacing
 - Base unit: 4px (Tailwind defaults)
@@ -36,12 +42,13 @@ Usar siempre desde el import, nunca inline.
 - Section gap: `mb-6`
 
 ### Depth Strategy
-Borders + subtle surface color shifts. Sin shadows.
+Borders-only + surface color shifts. No shadows (except calendar booking blocks use shadow-sm for magnetic board effect).
 
-- Base surface: `bg-background`
-- Elevated: `bg-background` + `border`
-- Hover: `bg-muted/40`
-- Active/Selected: `bg-accent`
+- Base surface: bg-bg-concreto
+- Card surface: bg-bg-superficie
+- Elevated (modals/dropdowns): bg-white
+- Hover: bg-white/50
+- Active/Selected: bg-white text-azul-rey border-l-2 border-azul-rey
 
 ### Border Radius
 - `rounded-lg` — cards, dialogs, sidebar
@@ -51,10 +58,10 @@ Borders + subtle surface color shifts. Sin shadows.
 ## Navigation
 
 ### Sidebar
-- Background: same as canvas (`bg-background`) with `border-r`
-- Active state: `bg-accent text-accent-foreground font-medium`
-- Inactive: `text-muted-foreground hover:text-foreground hover:bg-muted`
-- Icon size: `h-4 w-4`
+- Background: same as canvas (bg-bg-concreto) with border-r border-subtil
+- Active state: bg-white text-azul-rey border-l-2 border-azul-rey rounded-none rounded-r-lg
+- Inactive: text-muted-foreground hover:text-azul-rey hover:bg-white/50
+- Icon size: h-4 w-4
 
 ### Header
 - Sticky top, `border-b bg-background`
@@ -108,12 +115,12 @@ Borders + subtle surface color shifts. Sin shadows.
 ## Status Flow (Booking)
 Reservado → Esperando → En progreso → Listo → Entregado
 
-Color mapping:
-- reserved: blue
-- waiting: yellow
-- in_progress: orange
-- ready: green
-- delivered: gray
+Color mapping (BMW M-inspired):
+- reserved: Azul Señal (azul-rey)
+- waiting: Amarillo Advertencia (amber)
+- in_progress: Rojo Competencia (rojo)
+- ready: Verde Meta (green)
+- delivered: Gris Titanio (gray)
 
 ## Animation
 - `animate-fade-in` para page transitions
