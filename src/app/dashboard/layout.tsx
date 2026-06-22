@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ToastProvider } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Calendar, Users, Car, Settings, LayoutDashboard, Gift, LogOut, Menu, UserCog } from "lucide-react"
+import { Calendar, Users, Car, Settings, LayoutDashboard, Gift, LogOut, Menu, UserCog, BarChart3 } from "lucide-react"
 import { useState, useEffect, createContext, useContext } from "react"
 
 type RoleInfo = {
@@ -34,6 +34,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
   { href: "/dashboard/bookings", label: "Agenda", icon: Calendar, ownerOnly: false },
   { href: "/dashboard/calendar", label: "Calendario", icon: Calendar, ownerOnly: false },
+  { href: "/dashboard/reports", label: "Reportes", icon: BarChart3, ownerOnly: false },
   { href: "/dashboard/customers", label: "Clientes", icon: Users, ownerOnly: false },
   { href: "/dashboard/services", label: "Servicios", icon: Car, ownerOnly: true },
   { href: "/dashboard/loyalty", label: "Fidelización", icon: Gift, ownerOnly: true },
