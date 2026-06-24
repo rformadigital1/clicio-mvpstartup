@@ -112,38 +112,45 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
             <button className="md:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-5 w-5" />
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 cursor-pointer">
-                  {tenantLogo ? (
-                    <img src={tenantLogo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
-                  ) : (
-                    <span className="text-lg font-bold">CLICIO</span>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuLabel>{roleInfo.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {roleInfo.isOwner && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/settings/taller">Configuración</Link>
-                    </DropdownMenuItem>
-                    {tenantSlug && (
-                      <DropdownMenuItem asChild>
-                        <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 h-4 w-4" /> Ver Perfil
-                        </a>
-                      </DropdownMenuItem>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <span className="text-lg font-bold">CLICIO</span>
+            </Link>
+            <div className="ml-auto flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-9 w-9 rounded-full overflow-hidden border-2 border-border-subtil hover:border-azul-rey transition-colors">
+                    {tenantLogo ? (
+                      <img src={tenantLogo} alt="Logo" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center bg-muted text-sm font-bold text-muted-foreground">
+                        {roleInfo.email.charAt(0).toUpperCase()}
+                      </span>
                     )}
-                  </>
-                )}
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{roleInfo.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {roleInfo.isOwner && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/settings/taller">Configuración</Link>
+                      </DropdownMenuItem>
+                      {tenantSlug && (
+                        <DropdownMenuItem asChild>
+                          <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="mr-2 h-4 w-4" /> Ver Perfil
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 
