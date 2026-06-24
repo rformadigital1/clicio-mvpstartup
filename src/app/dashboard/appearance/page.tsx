@@ -87,6 +87,19 @@ export default function AppearancePage() {
 
   async function handleSave() {
     if (!tenant) return
+
+    if (!/^#[0-9A-Fa-f]{6}$/.test(config.primaryColor)) {
+      toast({ title: "Color inválido", description: "El color principal debe ser un hex válido (#RRGGBB).", variant: "destructive" })
+      setSaving(false)
+      return
+    }
+
+    const allButtonsOff = Object.values(config.buttons).every((b) => !b.visible)
+    const quickSectionOn = config.sections.find((s) => s.id === "quick-buttons")?.visible
+    if (quickSectionOn && allButtonsOff) {
+      toast({ title: "Aviso", description: "Sección Botones rápidos activa, pero todos los botones individuales están desactivados." })
+    }
+
     setSaving(true)
     const { error } = await supabase
       .from("tenants")
