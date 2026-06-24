@@ -156,7 +156,7 @@ export default function ReportsPage() {
     let occupancy: number | null = null
     if (hasHours && hRes.data) {
       const daysInMonth = new Date(year, month + 1, 0).getDate()
-      let totalSlots = 0
+      let totalMinutes = 0
       for (let d = 1; d <= daysInMonth; d++) {
         const date = new Date(year, month, d)
         const dow = date.getDay()
@@ -164,11 +164,20 @@ export default function ReportsPage() {
         if (hours?.is_open) {
           const open = parseInt(hours.open_time.slice(0, 2))
           const close = parseInt(hours.close_time.slice(0, 2))
-          totalSlots += close - open
+          totalMinutes += (close - open) * 60
         }
       }
-      const bookedSlots = bRes.data.filter(b => b.status !== "cancelled").length
-      occupancy = totalSlots > 0 ? Math.round((bookedSlots / totalSlots) * 100) : 0
+      let bookedMinutes = 0
+      for (const b of bRes.data) {
+        if (b.status === "cancelled") continue
+        const svcs = (b as any).booking_services
+        if (svcs?.length > 0) {
+          bookedMinutes += svcs.reduce((sum: number, bs: any) => sum + (bs.services?.duration ?? 60), 0)
+        } else {
+          bookedMinutes += (b as any).services?.duration ?? 60
+        }
+      }
+      occupancy = totalMinutes > 0 ? Math.round((bookedMinutes / totalMinutes) * 100) : 0
     }
 
     setMetrics({
@@ -359,7 +368,7 @@ export default function ReportsPage() {
                     <DonutChart
                       value={metrics.newCustomers}
                       max={metrics.newCustomers + metrics.returningCustomers}
-                      colors={["#3b82f6", "#f97316"]}
+                      colors={undefined}
                     />
                   ) : (
                     <div className="h-20 w-20 rounded-full bg-muted shrink-0 flex items-center justify-center text-xs text-muted-foreground">

@@ -10,7 +10,7 @@ export function DonutChart({
   value,
   max,
   size = 80,
-  colors = ["#3b82f6", "#f97316"],
+  colors = ["hsl(var(--primary))", "hsl(var(--warning))"],
   formatter,
 }: DonutChartProps) {
   const pct = max > 0 ? (value / max) * 100 : 0

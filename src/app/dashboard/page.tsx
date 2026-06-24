@@ -76,7 +76,7 @@ export default function DashboardPage() {
       .from("bookings")
       .select("status, booking_services(service_id, services(price)), services(price)")
       .eq("tenant_id", tid)
-      .gte("created_at", monthStart)
+      .gte("booking_date", monthStart)
 
     let revenue = 0
     monthData?.forEach((b: any) => {
@@ -98,8 +98,8 @@ export default function DashboardPage() {
       .select("booking_services(service_id, services(price)), services(price)")
       .eq("tenant_id", tid)
       .eq("status", "delivered")
-      .gte("created_at", prevD.toISOString())
-      .lte("created_at", new Date(now.getFullYear(), now.getMonth(), 0).toISOString())
+        .gte("booking_date", prevD.toISOString().slice(0, 10))
+        .lte("booking_date", new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10))
 
     let prevRev = 0
     prevData?.forEach((b: any) => {
