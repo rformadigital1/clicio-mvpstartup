@@ -8,7 +8,6 @@ import { Clock, Wrench, CheckCircle2, Calendar, DollarSign, TrendingUp, Trending
 import { Skeleton } from "@/components/ui/skeleton"
 import type { BookingStatus } from "@/lib/types"
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_TEXT_COLORS } from "@/lib/booking-constants"
-import BookingActions from "@/components/booking/booking-actions"
 import CustomerHistoryModal from "@/components/booking/customer-history-modal"
 
 export default function DashboardPage() {
@@ -248,7 +247,7 @@ export default function DashboardPage() {
               </div>
             </div>
           ) : (
-            <TimelineCard key={slot.data.id} booking={slot.data} currentMinutes={currentMinutes} onViewHistory={() => setHistoryCustomerId(slot.data.customer_id)} onStatusChange={() => loadData()} />
+            <TimelineCard key={slot.data.id} booking={slot.data} currentMinutes={currentMinutes} onViewHistory={() => setHistoryCustomerId(slot.data.customer_id)} />
           )
         )}
       </div>
@@ -288,7 +287,7 @@ export default function DashboardPage() {
   )
 }
 
-function TimelineCard({ booking, currentMinutes, onViewHistory, onStatusChange }: { booking: any; currentMinutes: number; onViewHistory: () => void; onStatusChange: () => void }) {
+function TimelineCard({ booking, currentMinutes, onViewHistory }: { booking: any; currentMinutes: number; onViewHistory: () => void }) {
   const status = booking.status as BookingStatus
   const [h, m] = (booking.booking_time ?? "08:00").split(":").map(Number)
   const startMinutes = h * 60 + m
@@ -326,9 +325,6 @@ function TimelineCard({ booking, currentMinutes, onViewHistory, onStatusChange }
         {booking.customers?.phone && (
           <p className="text-xs text-muted-foreground mb-1">{booking.customers.phone}</p>
         )}
-        <div className="mt-2">
-          <BookingActions bookingId={booking.id} currentStatus={status} onStatusChange={onStatusChange} />
-        </div>
       </div>
     </div>
   )

@@ -3,8 +3,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,10 +31,10 @@ export function useRole() {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
   { href: "/dashboard/calendar", label: "Calendario", icon: Calendar, ownerOnly: false },
-  { href: "/dashboard/reports", label: "Reportes", icon: BarChart3, ownerOnly: false },
   { href: "/dashboard/ingresos", label: "Ingresos", icon: DollarSign, ownerOnly: true },
   { href: "/dashboard/customers", label: "Clientes", icon: Users, ownerOnly: false },
   { href: "/dashboard/services", label: "Servicios", icon: Car, ownerOnly: true },
+  { href: "/dashboard/reports", label: "Reportes", icon: BarChart3, ownerOnly: false },
 ]
 
 const configSubItems = [
@@ -106,8 +104,6 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const userInitial = roleInfo.email.charAt(0).toUpperCase()
-
   return (
     <RoleContext.Provider value={roleInfo}>
       <div className="min-h-screen bg-muted/30">
@@ -116,45 +112,38 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
             <button className="md:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-5 w-5" />
             </button>
-            <Link href="/dashboard" className="flex items-center gap-2">
-              {tenantLogo ? (
-                <img src={tenantLogo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
-              ) : (
-                <span className="text-lg font-bold">CLICIO</span>
-              )}
-            </Link>
-            <div className="ml-auto flex items-center gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>{userInitial}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{roleInfo.email}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {roleInfo.isOwner && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard/settings/taller">Configuración</Link>
-                      </DropdownMenuItem>
-                      {tenantSlug && (
-                        <DropdownMenuItem asChild>
-                          <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-4 w-4" /> Ver Perfil
-                          </a>
-                        </DropdownMenuItem>
-                      )}
-                    </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 cursor-pointer">
+                  {tenantLogo ? (
+                    <img src={tenantLogo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
+                  ) : (
+                    <span className="text-lg font-bold">CLICIO</span>
                   )}
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>{roleInfo.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {roleInfo.isOwner && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/settings/taller">Configuración</Link>
+                    </DropdownMenuItem>
+                    {tenantSlug && (
+                      <DropdownMenuItem asChild>
+                        <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" /> Ver Perfil
+                        </a>
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
