@@ -99,7 +99,18 @@ export default function TenantSitePage() {
 
   const cleanPhone = tenant.phone?.replace(/[^0-9]/g, "")
 
-  const config: PageConfig = tenant.page_config ?? DEFAULT_CONFIG
+  function migrateConfig(raw: any): PageConfig {
+    if (raw?.template) return raw as PageConfig
+    return {
+      template: "classic" as TemplateId,
+      primaryColor: raw?.colors?.primary ?? DEFAULT_CONFIG.primaryColor,
+      fontPreset: raw?.fontPreset ?? DEFAULT_CONFIG.fontPreset,
+      sections: raw?.sections ?? DEFAULT_CONFIG.sections,
+      buttons: raw?.buttons ?? DEFAULT_CONFIG.buttons,
+    }
+  }
+
+  const config = migrateConfig(tenant.page_config)
   const colors = derivePalette(config.template as TemplateId, config.primaryColor)
   const fonts = getFontPreset(config.template as TemplateId, config.fontPreset)
 
