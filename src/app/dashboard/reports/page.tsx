@@ -20,6 +20,7 @@ export default function ReportsPage() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [metrics, setMetrics] = useState<any>(null)
   const [hasHours, setHasHours] = useState(false)
+  const [bResData, setBResData] = useState<any[]>([])
 
   const monthNames = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
 
@@ -81,7 +82,9 @@ export default function ReportsPage() {
     setHasHours((hRes.data?.length ?? 0) > 0)
 
     if (bRes.error) { toast({ title: "Error al cargar datos", variant: "destructive" }); setLoading(false); return }
-    if (!bRes.data || bRes.data.length === 0) { setMetrics(null); setLoading(false); return }
+    if (!bRes.data || bRes.data.length === 0) { setMetrics(null); setBResData([]); setLoading(false); return }
+
+    setBResData(bRes.data)
 
     let revenue = 0
     let prevRevenue = 0
@@ -113,6 +116,40 @@ export default function ReportsPage() {
         noShowCount++
       }
     }
+
+    const revenueByStatus: Record<string, number> = { reserved: 0, delivered: 0, cancelled: 0 }
+    const countByStatus: Record<string, number> = { reserved: 0, delivered: 0, cancelled: 0 }
+    for (const b of bRes.data) {
+      const st = b.status as string
+      if (!revenueByStatus[st]) revenueByStatus[st] = 0
+      if (!countByStatus[st]) countByStatus[st] = 0
+      if (st === "delivered") {
+        const svcs = (b as any).booking_services
+        if (svcs?.length > 0) {
+          revenueByStatus[st] += svcs.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+        } else {
+          revenueByStatus[st] += (b as any).services?.price ?? 0
+        }
+      }
+      countByStatus[st]++
+    }
+
+    const dailyRevenueMap: Record<string, { delivered: number; total: number }> = {}
+    for (const b of bRes.data) {
+      const day = b.booking_date?.slice(0, 10)
+      if (!day) continue
+      if (!dailyRevenueMap[day]) dailyRevenueMap[day] = { delivered: 0, total: 0 }
+      let total = 0
+      const svcs = (b as any).booking_services
+      if (svcs?.length > 0) {
+        total = svcs.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+      } else {
+        total = (b as any).services?.price ?? 0
+      }
+      dailyRevenueMap[day].total += total
+      if (b.status === "delivered") dailyRevenueMap[day].delivered += total
+    }
+    const dailyRevenue = Object.entries(dailyRevenueMap).sort(([a], [b]) => a.localeCompare(b))
 
     if (prevBRes.data) {
       for (const b of prevBRes.data) {
@@ -191,13 +228,16 @@ export default function ReportsPage() {
       noShowRate: totalBookings > 0 ? Math.round((noShowCount / totalBookings) * 100) : 0,
       noShowCount,
       totalBookings,
+      revenueByStatus,
+      countByStatus,
+      dailyRevenue,
     })
     setLoading(false)
   }
 
   function exportCSV() {
     if (!metrics) return
-    const rows = [
+    const rows: string[][] = [
       ["Métrica", "Valor"],
       ["Mes", `${monthNames[month]} ${year}`],
       ["Ingresos", String(metrics.revenue)],
@@ -211,7 +251,27 @@ export default function ReportsPage() {
       [],
       ["Servicio", "Cantidad", "Ingreso"],
       ...metrics.topServices.map((s: any) => [s.name, String(s.count), String(s.revenue)]),
+      [],
+      ["Fecha", "Hora", "Cliente", "Vehículo", "Servicios", "Total", "Estado"],
     ]
+
+    for (const b of bResData) {
+      const svcs = b.booking_services
+      const svcNames = svcs?.length > 0 ? svcs.map((bs: any) => bs.services?.name).filter(Boolean).join(", ") : ""
+      let total = 0
+      if (svcs?.length > 0) {
+        total = svcs.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+      }
+      rows.push([
+        b.booking_date ?? "",
+        b.booking_time?.slice(0, 5) ?? "",
+        b.customers?.name ?? "",
+        b.vehicles?.plate ?? "",
+        svcNames,
+        String(total),
+        b.status ?? "",
+      ])
+    }
 
     const csv = rows.map(r => r.join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
@@ -327,6 +387,61 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Ingresos por estado</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(["reserved", "delivered", "cancelled"] as const).map((s) => {
+                const labels: Record<string, string> = { reserved: "Reservado", delivered: "Entregado", cancelled: "Cancelado" }
+                const barColors: Record<string, string> = { reserved: "hsl(var(--primary))", delivered: "hsl(142 76% 36%)", cancelled: "hsl(0 72% 51%)" }
+                const rev = metrics.revenueByStatus[s] ?? 0
+                const cnt = metrics.countByStatus[s] ?? 0
+                const maxRev = Math.max(...(["reserved", "delivered", "cancelled"] as const).map((st) => metrics.revenueByStatus[st] ?? 0), 1)
+                return (
+                  <div key={s}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">{labels[s]}</span>
+                      <span className="text-muted-foreground">${rev.toLocaleString("es-CL")} — {cnt} {cnt === 1 ? "reserva" : "reservas"}</span>
+                    </div>
+                    <div className="h-5 bg-muted rounded-sm overflow-hidden">
+                      <div className="h-full rounded-sm transition-all" style={{ width: `${(rev / maxRev) * 100}%`, backgroundColor: barColors[s] }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Ingresos diarios</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end gap-[2px] h-40 overflow-x-auto">
+                {metrics.dailyRevenue.map(([day, data]: [string, any]) => {
+                  const dayNum = parseInt(day.slice(8, 10))
+                  const maxVal = Math.max(...metrics.dailyRevenue.map(([, d]: [string, any]) => d.delivered), 1)
+                  const h = (data.delivered / maxVal) * 100
+                  return (
+                    <div key={day} className="flex flex-col items-center gap-1 min-w-[24px]">
+                      <div className="flex-1 w-full flex flex-col justify-end">
+                        <div
+                          className="w-full bg-primary rounded-t-sm transition-all"
+                          style={{ height: `${Math.max(h, 1)}%` }}
+                          title={`${dayNum}: $${data.delivered.toLocaleString("es-CL")}`}
+                        />
+                      </div>
+                      {metrics.dailyRevenue.length <= 31 && (
+                        <span className="text-[10px] text-muted-foreground">{dayNum}</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
