@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ToastProvider } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, BarChart3, ExternalLink, Palette, DollarSign } from "lucide-react"
+import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, BarChart3, ExternalLink, DollarSign, ChevronDown, Info, Clock, Image, UsersRound, Palette } from "lucide-react"
 import { useState, useEffect, createContext, useContext } from "react"
 
 type RoleInfo = {
@@ -37,8 +37,14 @@ const navItems = [
   { href: "/dashboard/ingresos", label: "Ingresos", icon: DollarSign, ownerOnly: true },
   { href: "/dashboard/customers", label: "Clientes", icon: Users, ownerOnly: false },
   { href: "/dashboard/services", label: "Servicios", icon: Car, ownerOnly: true },
-  { href: "/dashboard/settings", label: "Configuración", icon: Settings, ownerOnly: true },
-  { href: "/dashboard/appearance", label: "Apariencia", icon: Palette, ownerOnly: true },
+]
+
+const configSubItems = [
+  { href: "/dashboard/settings/taller", label: "Información del Taller", icon: Info },
+  { href: "/dashboard/settings/horarios", label: "Horarios y Fechas Bloqueadas", icon: Clock },
+  { href: "/dashboard/settings/galeria", label: "Galería de Trabajos", icon: Image },
+  { href: "/dashboard/settings/equipo", label: "Equipo", icon: UsersRound },
+  { href: "/dashboard/settings/apariencia", label: "Apariencia", icon: Palette },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -51,12 +57,13 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
   const [tenantLogo, setTenantLogo] = useState<string | null>(null)
   const [tenantSlug, setTenantSlug] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-
   const router = useRouter()
   const pathname = usePathname()
+  const [settingsOpen, setSettingsOpen] = useState(() => pathname.startsWith("/dashboard/settings"))
   const supabase = createClient()
 
   useEffect(() => { loadRole() }, [])
+  useEffect(() => { setSettingsOpen(pathname.startsWith("/dashboard/settings")) }, [pathname])
 
   async function loadRole() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -86,7 +93,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
   const filteredNav = navItems.filter(item => !item.ownerOnly || roleInfo?.isOwner)
 
-  const staffRestricted = ["/dashboard/services", "/dashboard/settings", "/dashboard/appearance"]
+  const staffRestricted = ["/dashboard/services", "/dashboard/settings", "/dashboard/appearance", ...configSubItems.map(i => i.href)]
   if (!loading && roleInfo && !roleInfo.isOwner && staffRestricted.includes(pathname)) {
     return <RedirectToDashboard />
   }
@@ -131,7 +138,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                   {roleInfo.isOwner && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link href="/dashboard/settings">Configuración</Link>
+                        <Link href="/dashboard/settings/taller">Configuración</Link>
                       </DropdownMenuItem>
                       {tenantSlug && (
                         <DropdownMenuItem asChild>
@@ -176,6 +183,46 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                   </Link>
                 )
                 })}
+              {roleInfo?.isOwner && (
+                <div>
+                  <button
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm transition-colors ${
+                      settingsOpen || pathname.startsWith("/dashboard/settings")
+                        ? "bg-white text-azul-rey font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Settings className="h-4 w-4" />
+                      Configuración
+                    </span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${settingsOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {settingsOpen && (
+                    <div className="ml-4 mt-1 space-y-1 border-l border-muted pl-2">
+                      {configSubItems.map((item) => {
+                        const isSubActive = pathname === item.href
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                              isSubActive
+                                ? "bg-white text-azul-rey font-medium border-l-2 border-azul-rey rounded-none rounded-r-lg"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+                            }`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            {item.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </nav>
             {tenantSlug && roleInfo?.isOwner && (
               <div className="px-4 mt-auto mb-4">
