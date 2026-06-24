@@ -152,11 +152,9 @@ export type PageSection = {
 }
 
 export interface PageConfig {
-  colors: PageColors
-  typography: {
-    headingFont: string
-    bodyFont: string
-  }
+  template: "classic" | "modern" | "natural" | "industrial"
+  primaryColor: string
+  fontPreset: string
   sections: PageSection[]
   buttons: PageButtons
 }
