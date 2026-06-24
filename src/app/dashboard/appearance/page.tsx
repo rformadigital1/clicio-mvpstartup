@@ -4,15 +4,19 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import type { Tenant, PageConfig } from "@/lib/types"
-import ColorSection from "@/components/appearance/color-section"
-import TypographySection from "@/components/appearance/typography-section"
+import type { Tenant, PageConfig, PageColors } from "@/lib/types"
+import type { TemplateId } from "@/lib/templates"
+import { TEMPLATES, derivePalette } from "@/lib/templates"
+import TemplateSelector from "@/components/appearance/template-selector"
+import PrimaryColorPicker from "@/components/appearance/primary-color-picker"
+import FontPresetSelector from "@/components/appearance/font-preset-selector"
 import SectionsSection from "@/components/appearance/sections-section"
 import ButtonsSection from "@/components/appearance/buttons-section"
 
 const DEFAULT_CONFIG: PageConfig = {
-  colors: { primary: "#1A3A8A", secondary: "#4A90D9", accent: "#E3242B", background: "#F7F5F3", cardBg: "#FFFFFF", text: "#1A1A1A", buttonBg: "#1A3A8A", buttonText: "#FFFFFF" },
-  typography: { headingFont: "var(--font-display)", bodyFont: "Inter, sans-serif" },
+  template: "classic",
+  primaryColor: TEMPLATES.classic.basePalette.primary,
+  fontPreset: TEMPLATES.classic.fontPresets[0].id,
   sections: [
     { id: "quick-buttons", visible: true, order: 0 },
     { id: "services", visible: true, order: 1 },
@@ -40,6 +44,17 @@ export default function AppearancePage() {
     loadTenant()
   }, [])
 
+  function migrateOldConfig(old: any): PageConfig {
+    if (old.template) return old as PageConfig
+    return {
+      template: "classic" as TemplateId,
+      primaryColor: old.colors?.primary ?? DEFAULT_CONFIG.primaryColor,
+      fontPreset: DEFAULT_CONFIG.fontPreset,
+      sections: old.sections ?? DEFAULT_CONFIG.sections,
+      buttons: old.buttons ?? DEFAULT_CONFIG.buttons,
+    }
+  }
+
   async function loadTenant() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -61,7 +76,8 @@ export default function AppearancePage() {
 
       if (tData) {
         setTenant(tData)
-        setConfig(tData.page_config ?? DEFAULT_CONFIG)
+        const parsed = tData.page_config ?? {}
+        setConfig(migrateOldConfig(parsed))
       }
     } catch {
       toast({ title: "Error al cargar", description: "No se pudo cargar la configuración", variant: "destructive" })
@@ -101,17 +117,29 @@ export default function AppearancePage() {
       </div>
 
       <div className="space-y-6">
-        <ColorSection
-          colors={config.colors}
-          onChange={(colors) => setConfig({ ...config, colors })}
+        <TemplateSelector
+          value={config.template}
+          onChange={(template) => {
+            const t = TEMPLATES[template]
+            setConfig({
+              ...config,
+              template,
+              primaryColor: t.basePalette.primary,
+              fontPreset: t.fontPresets[0].id,
+            })
+          }}
         />
 
-        <TypographySection
-          headingFont={config.typography.headingFont}
-          bodyFont={config.typography.bodyFont}
-          onChange={(field, value) =>
-            setConfig({ ...config, typography: { ...config.typography, [field]: value } })
-          }
+        <PrimaryColorPicker
+          template={config.template}
+          value={config.primaryColor}
+          onChange={(primaryColor) => setConfig({ ...config, primaryColor })}
+        />
+
+        <FontPresetSelector
+          template={config.template}
+          value={config.fontPreset}
+          onChange={(fontPreset) => setConfig({ ...config, fontPreset })}
         />
 
         <SectionsSection

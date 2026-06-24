@@ -4,11 +4,19 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Tenant, Service, BusinessHour, GalleryImage, PageConfig } from "@/lib/types"
+import { TEMPLATES, derivePalette } from "@/lib/templates"
+import type { TemplateId } from "@/lib/templates"
 import { BookingWizard } from "@/components/booking/booking-wizard"
 
+function getFontPreset(templateId: TemplateId, fontPresetId: string) {
+  const template = TEMPLATES[templateId] ?? TEMPLATES.classic
+  return template.fontPresets.find((f) => f.id === fontPresetId) ?? template.fontPresets[0]
+}
+
 const DEFAULT_CONFIG: PageConfig = {
-  colors: { primary: "#1A3A8A", secondary: "#4A90D9", accent: "#E3242B", background: "#F7F5F3", cardBg: "#FFFFFF", text: "#1A1A1A", buttonBg: "#1A3A8A", buttonText: "#FFFFFF" },
-  typography: { headingFont: "var(--font-display)", bodyFont: "Inter, sans-serif" },
+  template: "classic",
+  primaryColor: TEMPLATES.classic.basePalette.primary,
+  fontPreset: TEMPLATES.classic.fontPresets[0].id,
   sections: [
     { id: "quick-buttons", visible: true, order: 0 },
     { id: "services", visible: true, order: 1 },
@@ -92,18 +100,20 @@ export default function TenantSitePage() {
   const cleanPhone = tenant.phone?.replace(/[^0-9]/g, "")
 
   const config: PageConfig = tenant.page_config ?? DEFAULT_CONFIG
+  const colors = derivePalette(config.template as TemplateId, config.primaryColor)
+  const fonts = getFontPreset(config.template as TemplateId, config.fontPreset)
 
   const pageStyle = {
-    "--page-primary": config.colors.primary,
-    "--page-secondary": config.colors.secondary,
-    "--page-accent": config.colors.accent,
-    "--page-bg": config.colors.background,
-    "--page-card-bg": config.colors.cardBg,
-    "--page-text": config.colors.text,
-    "--page-btn-bg": config.colors.buttonBg,
-    "--page-btn-text": config.colors.buttonText,
-    "--page-heading-font": config.typography.headingFont,
-    "--page-body-font": config.typography.bodyFont,
+    "--page-primary": colors.primary,
+    "--page-secondary": colors.secondary,
+    "--page-accent": colors.accent,
+    "--page-bg": colors.background,
+    "--page-card-bg": colors.cardBg,
+    "--page-text": colors.text,
+    "--page-btn-bg": colors.buttonBg,
+    "--page-btn-text": colors.buttonText,
+    "--page-heading-font": fonts.headingFont,
+    "--page-body-font": fonts.bodyFont,
   } as React.CSSProperties
 
   const sortedSections = [...config.sections].sort((a, b) => a.order - b.order)
