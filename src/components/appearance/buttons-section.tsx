@@ -1,5 +1,6 @@
 "use client"
 
+import { AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
@@ -27,6 +28,10 @@ export default function ButtonsSection({ buttons, onChange }: ButtonsSectionProp
     <Card>
       <CardHeader><CardTitle>Botones rápidos</CardTitle></CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 mb-4">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <p>Los botones individuales solo se ven si la sección <strong>Botones rápidos</strong> está activa en la pestaña Secciones.</p>
+        </div>
         {BUTTON_KEYS.map(({ key, label }) => (
           <div key={key} className="flex items-center gap-3">
             <Switch checked={buttons[key].visible} onCheckedChange={(v) => update(key, "visible", v)} />
