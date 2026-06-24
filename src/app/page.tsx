@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckIcon } from "@/components/icons/whatsapp"
-import { Globe, Calendar, Award, Star, Users, TrendingUp, Clock } from "lucide-react"
+import { Globe, Calendar, Award, Star, Users, TrendingUp, Sparkles } from "lucide-react"
 
 export default function LandingPage() {
   return (
@@ -29,7 +29,7 @@ export default function LandingPage() {
       <main>
         <section className="container pt-32 pb-20 text-center animate-fade-in">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-azul-rey/20 bg-azul-rey/5 text-azul-rey text-xs font-medium mb-6">
-            <Clock className="h-3 w-3" />
+            <Sparkles className="h-3 w-3" />
             Nuevo — Sistema de fidelización incluido
           </div>
           <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center text-left">
