@@ -281,6 +281,19 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
               </p>
             </div>
           )}
+          {tenant.phone && (
+            <a
+              href={`https://wa.me/${tenant.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                `¡Hola, he agendado una hora en ${tenant.name} del ${selectedDate} a las ${selectedTime} para ${services.filter((s) => selectedServiceIds.includes(s.id)).map((s) => s.name).join(", ")}!`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 px-4 rounded-lg border border-green-600 text-green-700 font-medium text-sm hover:bg-green-50 transition-colors"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              Compartir por WhatsApp
+            </a>
+          )}
         </div>
       </div>
     )
@@ -525,20 +538,6 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
             </div>
           )}
         </div>
-      )}
-
-      {step === 4 && tenant.phone && (
-        <a
-          href={`https://wa.me/${tenant.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-            `Hola, quiero confirmar mi hora en ${tenant.name} del ${selectedDate} a las ${selectedTime} para ${services.filter((s) => selectedServiceIds.includes(s.id)).map((s) => s.name).join(", ")}.`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg border border-green-600 text-green-700 font-medium text-sm hover:bg-green-50 transition-colors"
-        >
-          <WhatsAppIcon className="h-4 w-4" />
-          Confirmar por WhatsApp
-        </a>
       )}
 
       </div>

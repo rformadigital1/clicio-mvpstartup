@@ -8,7 +8,7 @@ const CSP = [
   "img-src 'self' data: blob: https://*.supabase.co https://*.unsplash.com https:",
   "font-src 'self' https://fonts.gstatic.com",
   "connect-src 'self' https://*.supabase.co https://api.emailjs.com wss://*.supabase.co",
-  "frame-src 'self' https://*.supabase.co https://maps.google.com",
+  "frame-src 'self' https://*.supabase.co https://maps.google.com https://www.google.com",
   "base-uri 'self'",
   "form-action 'self'",
 ].join("; ")
