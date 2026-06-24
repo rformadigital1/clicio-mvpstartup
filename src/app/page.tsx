@@ -1,76 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckIcon } from "@/components/icons/whatsapp"
-import { Globe, Calendar, Award, Star, Users, TrendingUp, Sparkles, ArrowRight, Zap, Shield, Smartphone } from "lucide-react"
-
-function PhoneMockup() {
-  return (
-    <div className="relative mx-auto w-[260px] md:w-[280px] animate-fade-in">
-      <div className="relative rounded-[2.5rem] border-[3px] border-gray-800 dark:border-gray-600 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl overflow-hidden aspect-[9/19]">
-        <div className="h-7 bg-gray-800 flex items-center justify-center relative">
-          <div className="w-28 h-1.5 bg-gray-600 rounded-full" />
-        </div>
-        <div className="p-3 space-y-2.5 bg-white h-full">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-azul-rey/20 flex items-center justify-center">
-              <span className="text-[8px] font-bold text-azul-rey">C</span>
-            </div>
-            <div className="h-2.5 w-20 rounded-full bg-gray-200" />
-            <div className="ml-auto h-2 w-2 rounded-full bg-green-400" />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded bg-azul-rey/10" />
-            <div className="h-3 w-16 rounded bg-gray-100" />
-            <div className="h-3 w-8 rounded bg-azul-rey/20 ml-auto" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="h-14 rounded-xl bg-gradient-to-br from-azul-rey/10 to-transparent p-2 flex flex-col justify-end border border-azul-rey/10">
-              <div className="h-2 w-12 rounded bg-azul-rey/30" />
-              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
-            </div>
-            <div className="h-14 rounded-xl bg-gradient-to-br from-celeste-cielo/10 to-transparent p-2 flex flex-col justify-end border border-celeste-cielo/10">
-              <div className="h-2 w-12 rounded bg-celeste-cielo/30" />
-              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
-            </div>
-            <div className="h-14 rounded-xl bg-gradient-to-br from-amber-400/10 to-transparent p-2 flex flex-col justify-end border border-amber-400/10">
-              <div className="h-2 w-12 rounded bg-amber-400/30" />
-              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
-            </div>
-            <div className="h-14 rounded-xl bg-gradient-to-br from-green-400/10 to-transparent p-2 flex flex-col justify-end border border-green-400/10">
-              <div className="h-2 w-12 rounded bg-green-400/30" />
-              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
-            </div>
-          </div>
-          <div className="h-16 rounded-xl border border-gray-100 p-2.5 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-azul-rey/10 flex items-center justify-center">
-              <Calendar className="h-3.5 w-3.5 text-azul-rey" />
-            </div>
-            <div className="flex-1">
-              <div className="h-2 w-24 rounded bg-gray-200" />
-              <div className="h-2 w-16 rounded bg-gray-100 mt-1" />
-            </div>
-            <div className="h-5 w-14 rounded-full bg-azul-rey flex items-center justify-center">
-              <div className="h-1.5 w-8 rounded bg-white/60" />
-            </div>
-          </div>
-          <div className="flex gap-1.5">
-            <div className="h-6 flex-1 rounded-full bg-azul-rey flex items-center justify-center">
-              <div className="h-1.5 w-10 rounded bg-white/40" />
-            </div>
-            <div className="h-6 w-6 rounded-full border border-gray-200 flex items-center justify-center">
-              <div className="h-2 w-2 rounded-full bg-gray-300" />
-            </div>
-          </div>
-          <div className="h-3 flex items-center justify-center">
-            <div className="h-1 w-16 rounded-full bg-gray-200" />
-          </div>
-        </div>
-      </div>
-      <div className="absolute -top-6 -right-6 w-20 h-20 blob-blue animate-float-slow opacity-70 -z-10" />
-      <div className="absolute -bottom-8 -left-8 w-28 h-28 blob-dark animate-float opacity-50 -z-10" />
-    </div>
-  )
-}
+import { Globe, Calendar, Award, Star, TrendingUp, ArrowRight, Zap, Shield, Smartphone } from "lucide-react"
+import { HeroSection } from "@/components/landing/hero-section"
 
 function DecorativeBlob({ className, variant = "blue" }: { className?: string; variant?: "blue" | "dark" | "red" | "amber" }) {
   const cls = variant === "blue" ? "blob-blue" : variant === "dark" ? "blob-dark" : variant === "red" ? "blob-red" : "blob-amber"
@@ -110,51 +42,7 @@ export default function LandingPage() {
       </header>
 
       <main>
-        {/* ── Hero ── */}
-        <section className="relative pt-32 pb-20 md:pt-40 md:pb-28">
-          <div className="container relative z-10">
-            <div className="flex flex-col items-center text-center">
-              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-azul-rey/20 bg-azul-rey/5 text-azul-rey text-xs font-medium mb-6 backdrop-blur-sm">
-                <Sparkles className="h-3 w-3" />
-                Nuevo — Sistema de fidelización incluido
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1] max-w-4xl">
-                Más clientes.
-                <br />
-                Más reservas.
-                <br />
-                <span className="bg-gradient-to-r from-azul-rey via-celeste-cielo to-azul-rey bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer">
-                  Más recompra.
-                </span>
-              </h1>
-              <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-                Todo desde una sola plataforma. Web profesional, agenda online, gestión de clientes y fidelización digital para tu taller.
-              </p>
-              <div className="mt-8 flex gap-4">
-                <Button size="lg" className="gap-2" asChild>
-                  <Link href="/signup">Solicitar Demo <ArrowRight className="h-4 w-4" /></Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <a href="#solucion">Conocer más</a>
-                </Button>
-              </div>
-              <div className="mt-8 flex items-center gap-6 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5 text-green-600" /> +40% reservas</span>
-                <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-azul-rey" /> +50 talleres</span>
-                <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-400" /> 4.9/5 estrellas</span>
-              </div>
-            </div>
-            <div className="mt-16 flex justify-center">
-              <div className="relative">
-                <PhoneMockup />
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-border-subtil shadow-sm text-xs text-muted-foreground whitespace-nowrap">
-                  Dashboard en tiempo real
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtil to-transparent" />
-        </section>
+        <HeroSection />
 
         {/* ── Problema ── */}
         <section id="problema" className="relative py-24">
@@ -184,7 +72,8 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="grid md:grid-cols-4 gap-4">
-              <div className="md:col-span-2 md:row-span-2 rounded-2xl border border-border-subtil bg-card p-8 card-lift hover:border-azul-rey/30 cursor-pointer animate-fade-in-up">
+              <div className="group md:col-span-2 md:row-span-2 rounded-2xl border border-border-subtil bg-card p-8 card-lift hover:border-azul-rey/30 cursor-pointer animate-fade-in-up relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-azul-rey/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-azul-rey/20 to-celeste-cielo/20 flex items-center justify-center mb-5">
                   <Globe className="h-6 w-6 text-azul-rey" />
                 </div>
@@ -201,21 +90,24 @@ export default function LandingPage() {
                   ))}
                 </ul>
               </div>
-              <div className="md:col-span-2 rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-celeste-cielo/30 cursor-pointer animate-fade-in-up animation-delay-100">
+              <div className="group md:col-span-2 rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-celeste-cielo/30 cursor-pointer animate-fade-in-up animation-delay-100 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-celeste-cielo/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-celeste-cielo/20 to-azul-rey/20 flex items-center justify-center mb-4">
                   <Calendar className="h-5 w-5 text-celeste-cielo" />
                 </div>
                 <h3 className="font-bold mb-2">Agenda Online</h3>
                 <p className="text-sm text-muted-foreground">Tus clientes reservan desde tu web. Recibes confirmaciones y recordatorios automáticos.</p>
               </div>
-              <div className="rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-amber-400/30 cursor-pointer animate-fade-in-up animation-delay-200">
+              <div className="group rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-amber-400/30 cursor-pointer animate-fade-in-up animation-delay-200 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center mb-4">
                   <Zap className="h-5 w-5 text-amber-500" />
                 </div>
                 <h3 className="font-bold mb-2">Notificaciones</h3>
                 <p className="text-sm text-muted-foreground">Recordatorios automáticos por WhatsApp. Menos ausencias, más clientes.</p>
               </div>
-              <div className="rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-green-400/30 cursor-pointer animate-fade-in-up animation-delay-300">
+              <div className="group rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-green-400/30 cursor-pointer animate-fade-in-up animation-delay-300 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-400/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400/20 to-emerald-400/20 flex items-center justify-center mb-4">
                   <Smartphone className="h-5 w-5 text-green-500" />
                 </div>
@@ -287,8 +179,11 @@ export default function LandingPage() {
                   </div>
                   <p className="text-sm text-muted-foreground mb-5 leading-relaxed relative z-10">&ldquo;{t.text}&rdquo;</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-azul-rey to-celeste-cielo flex items-center justify-center text-[10px] font-bold text-white">
-                      {t.name.charAt(0)}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-azul-rey to-celeste-cielo rounded-full blur-md opacity-60 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-azul-rey to-celeste-cielo flex items-center justify-center text-[10px] font-bold text-white">
+                        {t.name.charAt(0)}
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm font-semibold">{t.name}</p>
@@ -306,7 +201,7 @@ export default function LandingPage() {
         <section id="precio" className="relative py-24">
           <DecorativeBlob className="absolute top-20 left-1/3 w-64 h-64 opacity-40" variant="dark" />
           <div className="container relative z-10 max-w-md">
-            <div className="relative rounded-2xl border-2 border-azul-rey/20 bg-gradient-to-b from-white dark:from-gray-800 to-card p-8 text-center shadow-xl overflow-hidden">
+            <div className="relative rounded-2xl border-2 border-azul-rey/20 bg-gradient-to-b from-white dark:from-zinc-800 to-card p-8 text-center shadow-xl overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-azul-rey/[0.03] to-transparent pointer-events-none" />
               <span className="relative z-10 inline-flex px-4 py-1 bg-azul-rey text-white text-xs font-semibold rounded-full mb-4">Plan Único</span>
               <h2 className="relative z-10 text-3xl font-bold">Precio Único</h2>
@@ -333,12 +228,13 @@ export default function LandingPage() {
         </section>
 
         {/* ── CTA ── */}
-        <section className="relative py-24 bg-muted/30 dots-bg">
+        <section className="relative py-24 bg-muted/30 dots-bg overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(74,144,217,0.08)_0%,transparent_70%)] pointer-events-none" />
           <div className="container relative z-10 max-w-xl text-center">
             <h2 className="text-3xl md:text-4xl font-bold">Comienza hoy</h2>
             <p className="mt-4 text-muted-foreground text-lg">En menos de 15 minutos tu taller tiene presencia profesional en internet.</p>
             <div className="mt-8 flex gap-3 justify-center">
-              <Button size="lg" className="gap-2" asChild>
+              <Button size="lg" className="gap-2 shine-overlay" asChild>
                 <Link href="/signup">Solicitar Demo <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
