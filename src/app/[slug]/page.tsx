@@ -137,11 +137,11 @@ export default function TenantSitePage() {
           href={`https://wa.me/${cleanPhone}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all"
+          className="group flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-xl px-4 py-3.5 text-sm font-medium hover:border-[var(--page-primary)]/30 hover:shadow-lg hover:shadow-[var(--page-primary)]/5 transition-all duration-200"
         >
-          <WhatsAppIcon className="h-5 w-5" />
+          <WhatsAppIcon className="h-5 w-5 shrink-0" />
           {config.buttons.whatsapp.label}
-          <span className="ml-auto text-muted-foreground text-xs">↗</span>
+          <span className="ml-auto text-muted-foreground text-xs group-hover:translate-x-0.5 transition-transform">↗</span>
         </a>
       )}
       {config.buttons.instagram.visible && tenant.instagram && (() => {
@@ -153,18 +153,18 @@ export default function TenantSitePage() {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all"
+            className="group flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-xl px-4 py-3.5 text-sm font-medium hover:border-[var(--page-primary)]/30 hover:shadow-lg hover:shadow-[var(--page-primary)]/5 transition-all duration-200"
           >
             <InstagramIcon />
             {config.buttons.instagram.label}
-            <span className="ml-auto text-muted-foreground text-xs">↗</span>
+            <span className="ml-auto text-muted-foreground text-xs group-hover:translate-x-0.5 transition-transform">↗</span>
           </a>
         )
       })()}
       {config.buttons.servicios.visible && (
         <button
           onClick={() => servicesRef.current?.scrollIntoView({ behavior: "smooth" })}
-          className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all text-left"
+          className="group flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-xl px-4 py-3.5 text-sm font-medium hover:border-[var(--page-primary)]/30 hover:shadow-lg hover:shadow-[var(--page-primary)]/5 transition-all duration-200 text-left"
         >
           <WrenchIcon />
           {config.buttons.servicios.label}
@@ -173,7 +173,7 @@ export default function TenantSitePage() {
       {config.buttons.agendar.visible && (
         <button
           onClick={() => wizardRef.current?.scrollIntoView({ behavior: "smooth" })}
-          className="flex items-center gap-3 w-full bg-[var(--page-btn-bg)] text-[var(--page-btn-text)] border border-[var(--page-btn-bg)] rounded-lg px-4 py-3 text-sm font-semibold hover:bg-[var(--page-btn-bg)]/90 transition-all shadow-sm"
+          className="group flex items-center gap-3 w-full bg-[var(--page-btn-bg)] text-[var(--page-btn-text)] border border-[var(--page-btn-bg)] rounded-xl px-4 py-3.5 text-sm font-semibold hover:bg-[var(--page-btn-bg)]/90 hover:shadow-lg hover:shadow-[var(--page-btn-bg)]/20 transition-all duration-200"
         >
           <CalendarIcon />
           {config.buttons.agendar.label}
@@ -184,15 +184,22 @@ export default function TenantSitePage() {
 
   const servicesSection = services.length > 0 ? (
     <section ref={servicesRef} id="servicios" className="py-8">
-      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center">Servicios</h3>
+      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center relative inline-block w-full">
+        <span className="relative z-10 bg-[var(--page-bg)] px-4">{services.length > 1 ? "Servicios" : "Servicio"}</span>
+        <span className="absolute left-0 right-0 top-1/2 h-px bg-[var(--page-primary)]/10 -z-0" />
+      </h3>
       <div className="space-y-3">
         {services.map((s) => (
-          <div key={s.id} className="bg-[var(--page-card-bg)] rounded-lg p-4 border border-border-subtil flex items-center justify-between">
+          <div key={s.id} className="group bg-[var(--page-card-bg)] rounded-xl p-4 border border-border-subtil flex items-center justify-between hover:shadow-lg hover:shadow-[var(--page-primary)]/5 hover:border-[var(--page-primary)]/20 transition-all duration-200">
             <div>
               <h4 className="font-semibold text-sm">{s.name}</h4>
-              {s.duration && <p className="text-xs text-muted-foreground">{s.duration} min</p>}
+              {s.duration && <p className="text-xs text-muted-foreground mt-0.5">{s.duration} min</p>}
             </div>
-            {s.price && <p className="text-sm font-bold text-[var(--page-primary)]">$ {s.price.toLocaleString("es-CL")}</p>}
+            {s.price && (
+              <div className="px-3 py-1 rounded-full bg-[var(--page-primary)]/10 text-[var(--page-primary)] text-sm font-bold">
+                $ {s.price.toLocaleString("es-CL")}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -207,11 +214,15 @@ export default function TenantSitePage() {
 
   const gallerySection = gallery.length > 0 ? (
     <section className="py-8">
-      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center">Trabajos Realizados</h3>
+      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center relative inline-block w-full">
+        <span className="relative z-10 bg-[var(--page-bg)] px-4">Trabajos Realizados</span>
+        <span className="absolute left-0 right-0 top-1/2 h-px bg-[var(--page-primary)]/10 -z-0" />
+      </h3>
       <div className="grid grid-cols-2 gap-3">
         {gallery.map((img) => (
-          <button key={img.id} onClick={() => setLightboxUrl(img.image_url)} className="aspect-square overflow-hidden rounded-lg border border-border-subtil group">
-            <img src={img.image_url} alt={`Trabajo realizado por ${tenant.name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <button key={img.id} onClick={() => setLightboxUrl(img.image_url)} className="group aspect-square overflow-hidden rounded-xl border border-border-subtil shadow-sm hover:shadow-md hover:border-[var(--page-primary)]/20 transition-all duration-200">
+            <img src={img.image_url} alt={`Trabajo realizado por ${tenant.name}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </button>
         ))}
       </div>
@@ -220,8 +231,11 @@ export default function TenantSitePage() {
 
   const mapSection = tenant.address ? (
     <section className="py-8">
-      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center">Ubicación</h3>
-      <div className="rounded-lg overflow-hidden border border-border-subtil">
+      <h3 className="text-lg font-[var(--page-heading-font)] italic font-bold text-[var(--page-primary)] mb-5 text-center relative inline-block w-full">
+        <span className="relative z-10 bg-[var(--page-bg)] px-4">Ubicación</span>
+        <span className="absolute left-0 right-0 top-1/2 h-px bg-[var(--page-primary)]/10 -z-0" />
+      </h3>
+      <div className="rounded-xl overflow-hidden border border-border-subtil shadow-sm">
         <iframe
           src={`https://maps.google.com/maps?q=${encodeURIComponent(tenant.address)}&output=embed`}
           className="w-full h-56"
@@ -242,15 +256,21 @@ export default function TenantSitePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--page-bg)]" style={pageStyle}>
-      <main className="max-w-lg mx-auto px-4 py-10">
+    <div className="min-h-screen bg-[var(--page-bg)] relative overflow-hidden" style={pageStyle}>
+      {/* Decorative blobs */}
+      <div className="fixed top-20 -left-20 w-60 h-60 rounded-full opacity-[0.08] pointer-events-none" style={{ background: `radial-gradient(circle, ${colors.primary}, transparent)`, filter: "blur(50px)" }} />
+      <div className="fixed bottom-40 -right-20 w-72 h-72 rounded-full opacity-[0.06] pointer-events-none" style={{ background: `radial-gradient(circle, ${colors.accent}, transparent)`, filter: "blur(50px)" }} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-[0.03] pointer-events-none" style={{ background: `radial-gradient(circle, ${colors.primary}, transparent)`, filter: "blur(70px)" }} />
+
+      <main className="max-w-lg mx-auto px-4 py-10 relative z-10">
         {/* Logo + Name */}
         <div className="text-center mb-8">
-          <div className="flex justify-center">
+          <div className="flex justify-center relative">
+            <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-[var(--page-primary)]/10 blur-xl animate-pulse-soft" />
             {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="w-20 h-20 rounded-full object-cover border-2 border-[var(--page-primary)]/20" />
+              <img src={tenant.logo_url} alt={tenant.name} className="relative w-20 h-20 rounded-full object-cover border-2 border-[var(--page-primary)]/20 shadow-lg" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--page-primary)] to-[var(--page-secondary)] flex items-center justify-center">
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[var(--page-primary)] to-[var(--page-secondary)] flex items-center justify-center shadow-lg">
                 <span className="text-2xl font-bold text-[var(--page-btn-text)]">{tenant.name.charAt(0)}</span>
               </div>
             )}
@@ -261,12 +281,14 @@ export default function TenantSitePage() {
 
         {/* Owner greeting */}
         <div className="text-center mb-8 animate-fade-in">
-          <p className="text-sm text-[var(--page-primary)]/80 font-[var(--page-body-font)]">
-            ¡Hola! Soy <span className="font-semibold">{tenant.name}</span>
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Agenda tu hora directamente desde aquí
-          </p>
+          <div className="inline-block px-4 py-2 rounded-xl bg-[var(--page-card-bg)] border border-border-subtil shadow-sm">
+            <p className="text-sm text-[var(--page-primary)]/80 font-[var(--page-body-font)]">
+              ¡Hola! Soy <span className="font-semibold">{tenant.name}</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Agenda tu hora directamente desde aquí
+            </p>
+          </div>
         </div>
 
         {sortedSections.map(section => {

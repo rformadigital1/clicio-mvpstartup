@@ -99,21 +99,33 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
   if (loading || !roleInfo) {
     return (
-      <div className="min-h-screen p-4 space-y-4">
-        <div className="flex gap-4">
-          <div className="hidden md:block w-64 space-y-2">
-            <div className="h-6 bg-bg-superficie rounded animate-pulse" />
-            <div className="h-6 bg-bg-superficie rounded animate-pulse w-3/4" />
-            <div className="h-6 bg-bg-superficie rounded animate-pulse w-1/2" />
-          </div>
-          <div className="flex-1 space-y-4">
-            <div className="h-8 bg-bg-superficie rounded animate-pulse w-56" />
-            <div className="h-4 bg-bg-superficie rounded animate-pulse w-72" />
-            <div className="flex gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 flex-1 bg-bg-superficie rounded-lg animate-pulse" />
+      <div className="min-h-screen p-6 space-y-6">
+        <div className="flex gap-6">
+          <div className="hidden md:block w-64 space-y-3">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-azul-rey/20 to-celeste-cielo/20 animate-pulse" />
+            <div className="h-4 bg-bg-superficie rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-bg-superficie rounded animate-pulse w-1/2" />
+            <div className="h-4 bg-bg-superficie rounded animate-pulse w-2/3" />
+            <div className="pt-4 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-10 bg-bg-superficie rounded-lg animate-pulse" />
               ))}
             </div>
+          </div>
+          <div className="flex-1 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-azul-rey/20 to-celeste-cielo/20 animate-pulse" />
+              <div className="h-6 bg-bg-superficie rounded animate-pulse w-48" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-24 bg-bg-superficie rounded-xl animate-pulse p-4 flex flex-col justify-between">
+                  <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+                  <div className="h-5 bg-muted rounded animate-pulse w-1/3" />
+                </div>
+              ))}
+            </div>
+            <div className="h-64 bg-bg-superficie rounded-xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -184,9 +196,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors group ${
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 relative ${
                       isActive
-                        ? "bg-white text-azul-rey font-medium border-l-2 border-azul-rey rounded-none rounded-r-lg"
+                        ? "bg-white text-azul-rey font-medium shadow-sm before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-azul-rey before:to-celeste-cielo"
                         : "text-muted-foreground hover:text-azul-rey hover:bg-white/50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
@@ -220,9 +232,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                           <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 relative ${
                               isSubActive
-                                ? "bg-white text-azul-rey font-medium border-l-2 border-azul-rey rounded-none rounded-r-lg"
+                                ? "bg-white text-azul-rey font-medium shadow-sm before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-azul-rey before:to-celeste-cielo"
                                 : "text-muted-foreground hover:text-foreground hover:bg-white/50"
                             }`}
                             onClick={() => setSidebarOpen(false)}

@@ -1,14 +1,97 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckIcon } from "@/components/icons/whatsapp"
-import { Globe, Calendar, Award, Star, Users, TrendingUp, Sparkles } from "lucide-react"
+import { Globe, Calendar, Award, Star, Users, TrendingUp, Sparkles, ArrowRight, Zap, Shield, Smartphone } from "lucide-react"
+
+function PhoneMockup() {
+  return (
+    <div className="relative mx-auto w-[260px] md:w-[280px] animate-fade-in">
+      <div className="relative rounded-[2.5rem] border-[3px] border-gray-800 dark:border-gray-600 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl overflow-hidden aspect-[9/19]">
+        <div className="h-7 bg-gray-800 flex items-center justify-center relative">
+          <div className="w-28 h-1.5 bg-gray-600 rounded-full" />
+        </div>
+        <div className="p-3 space-y-2.5 bg-white h-full">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-azul-rey/20 flex items-center justify-center">
+              <span className="text-[8px] font-bold text-azul-rey">C</span>
+            </div>
+            <div className="h-2.5 w-20 rounded-full bg-gray-200" />
+            <div className="ml-auto h-2 w-2 rounded-full bg-green-400" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 rounded bg-azul-rey/10" />
+            <div className="h-3 w-16 rounded bg-gray-100" />
+            <div className="h-3 w-8 rounded bg-azul-rey/20 ml-auto" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="h-14 rounded-xl bg-gradient-to-br from-azul-rey/10 to-transparent p-2 flex flex-col justify-end border border-azul-rey/10">
+              <div className="h-2 w-12 rounded bg-azul-rey/30" />
+              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
+            </div>
+            <div className="h-14 rounded-xl bg-gradient-to-br from-celeste-cielo/10 to-transparent p-2 flex flex-col justify-end border border-celeste-cielo/10">
+              <div className="h-2 w-12 rounded bg-celeste-cielo/30" />
+              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
+            </div>
+            <div className="h-14 rounded-xl bg-gradient-to-br from-amber-400/10 to-transparent p-2 flex flex-col justify-end border border-amber-400/10">
+              <div className="h-2 w-12 rounded bg-amber-400/30" />
+              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
+            </div>
+            <div className="h-14 rounded-xl bg-gradient-to-br from-green-400/10 to-transparent p-2 flex flex-col justify-end border border-green-400/10">
+              <div className="h-2 w-12 rounded bg-green-400/30" />
+              <div className="h-2 w-8 rounded bg-gray-200 mt-1" />
+            </div>
+          </div>
+          <div className="h-16 rounded-xl border border-gray-100 p-2.5 flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-azul-rey/10 flex items-center justify-center">
+              <Calendar className="h-3.5 w-3.5 text-azul-rey" />
+            </div>
+            <div className="flex-1">
+              <div className="h-2 w-24 rounded bg-gray-200" />
+              <div className="h-2 w-16 rounded bg-gray-100 mt-1" />
+            </div>
+            <div className="h-5 w-14 rounded-full bg-azul-rey flex items-center justify-center">
+              <div className="h-1.5 w-8 rounded bg-white/60" />
+            </div>
+          </div>
+          <div className="flex gap-1.5">
+            <div className="h-6 flex-1 rounded-full bg-azul-rey flex items-center justify-center">
+              <div className="h-1.5 w-10 rounded bg-white/40" />
+            </div>
+            <div className="h-6 w-6 rounded-full border border-gray-200 flex items-center justify-center">
+              <div className="h-2 w-2 rounded-full bg-gray-300" />
+            </div>
+          </div>
+          <div className="h-3 flex items-center justify-center">
+            <div className="h-1 w-16 rounded-full bg-gray-200" />
+          </div>
+        </div>
+      </div>
+      <div className="absolute -top-6 -right-6 w-20 h-20 blob-blue animate-float-slow opacity-70 -z-10" />
+      <div className="absolute -bottom-8 -left-8 w-28 h-28 blob-dark animate-float opacity-50 -z-10" />
+    </div>
+  )
+}
+
+function DecorativeBlob({ className, variant = "blue" }: { className?: string; variant?: "blue" | "dark" | "red" | "amber" }) {
+  const cls = variant === "blue" ? "blob-blue" : variant === "dark" ? "blob-dark" : variant === "red" ? "blob-red" : "blob-amber"
+  return <div className={`${cls} ${className ?? ""}`} />
+}
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
-      <header className="fixed top-0 z-50 w-full border-b border-border-subtil bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-shadow">
+    <div className="min-h-screen overflow-hidden">
+      {/* Global decorative blobs */}
+      <DecorativeBlob className="fixed top-40 -left-32 w-80 h-80 opacity-60 pointer-events-none" variant="blue" />
+      <DecorativeBlob className="fixed top-96 -right-40 w-96 h-96 opacity-40 pointer-events-none" variant="dark" />
+      <DecorativeBlob className="fixed bottom-40 left-1/3 w-72 h-72 opacity-30 pointer-events-none" variant="red" />
+      <DecorativeBlob className="fixed bottom-96 right-1/4 w-64 h-64 opacity-30 pointer-events-none" variant="amber" />
+
+      <header className="fixed top-0 z-50 w-full border-b border-border-subtil bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-shadow">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-azul-rey to-celeste-cielo flex items-center justify-center">
+              <span className="text-xs font-bold text-white">C</span>
+            </div>
             <span className="text-lg font-bold tracking-tight">CLICIO</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
@@ -27,146 +110,212 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="container pt-32 pb-20 text-center animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-azul-rey/20 bg-azul-rey/5 text-azul-rey text-xs font-medium mb-6">
-            <Sparkles className="h-3 w-3" />
-            Nuevo — Sistema de fidelización incluido
-          </div>
-          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center text-left">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
+        {/* ── Hero ── */}
+        <section className="relative pt-32 pb-20 md:pt-40 md:pb-28">
+          <div className="container relative z-10">
+            <div className="flex flex-col items-center text-center">
+              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-azul-rey/20 bg-azul-rey/5 text-azul-rey text-xs font-medium mb-6 backdrop-blur-sm">
+                <Sparkles className="h-3 w-3" />
+                Nuevo — Sistema de fidelización incluido
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1] max-w-4xl">
                 Más clientes.
                 <br />
                 Más reservas.
                 <br />
-                <span className="text-azul-rey">Más recompra.</span>
+                <span className="bg-gradient-to-r from-azul-rey via-celeste-cielo to-azul-rey bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer">
+                  Más recompra.
+                </span>
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground">
+              <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
                 Todo desde una sola plataforma. Web profesional, agenda online, gestión de clientes y fidelización digital para tu taller.
               </p>
-              <div className="mt-6 flex gap-4">
-                <Button size="lg" asChild>
-                  <Link href="/signup">Solicitar Demo</Link>
+              <div className="mt-8 flex gap-4">
+                <Button size="lg" className="gap-2" asChild>
+                  <Link href="/signup">Solicitar Demo <ArrowRight className="h-4 w-4" /></Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
                   <a href="#solucion">Conocer más</a>
                 </Button>
               </div>
-              <div className="mt-6 flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-green-600" /> +40% reservas</span>
-                <span className="flex items-center gap-1"><Users className="h-3 w-3 text-azul-rey" /> +50 talleres</span>
+              <div className="mt-8 flex items-center gap-6 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5 text-green-600" /> +40% reservas</span>
+                <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-azul-rey" /> +50 talleres</span>
+                <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-400" /> 4.9/5 estrellas</span>
               </div>
             </div>
-            <div className="hidden md:block relative">
-              <div className="aspect-[4/3] rounded-xl border border-border-subtil bg-gradient-to-br from-azul-rey/5 to-celeste-cielo/5 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-16 h-16 rounded-full bg-azul-rey/10 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-azul-rey">C</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Dashboard en vivo</p>
-                  <p className="text-xs text-muted-foreground mt-1">Gestiona tu taller desde cualquier lugar</p>
+            <div className="mt-16 flex justify-center">
+              <div className="relative">
+                <PhoneMockup />
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-border-subtil shadow-sm text-xs text-muted-foreground whitespace-nowrap">
+                  Dashboard en tiempo real
                 </div>
               </div>
-              <div className="absolute -bottom-3 -right-3 w-24 h-24 bg-azul-rey/5 rounded-full blur-2xl" />
             </div>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtil to-transparent" />
         </section>
 
-        <section id="problema" className="border-t py-20 animate-fade-in">
-          <div className="container max-w-2xl text-center">
-            <span className="text-xs font-semibold text-azul-rey uppercase tracking-wider">El problema</span>
-            <h2 className="text-3xl font-bold mt-2">Tu taller pierde clientes cada semana.</h2>
-            <p className="mt-4 text-muted-foreground">
+        {/* ── Problema ── */}
+        <section id="problema" className="relative py-24">
+          <DecorativeBlob className="absolute top-10 left-10 w-40 h-40 opacity-50" variant="dark" />
+          <div className="container relative z-10 max-w-2xl text-center">
+            <span className="text-xs font-semibold text-azul-rey uppercase tracking-[0.2em]">El problema</span>
+            <h2 className="text-3xl md:text-4xl font-bold mt-3 leading-tight">
+              Tu taller pierde clientes <span className="text-azul-rey">cada semana</span>.
+            </h2>
+            <div className="mt-6 mx-auto w-16 h-0.5 rounded-full bg-gradient-to-r from-azul-rey to-celeste-cielo" />
+            <p className="mt-6 text-muted-foreground text-lg leading-relaxed max-w-lg mx-auto">
               Sin página web, sin agenda ordenada, sin sistema de fidelización. Dependes solo del boca a boca y pierdes ventas todos los días.
             </p>
           </div>
         </section>
 
-        <section id="solucion" className="border-t py-20 bg-muted/50">
-          <div className="container max-w-4xl">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold text-azul-rey uppercase tracking-wider">La solución</span>
-              <h2 className="text-3xl font-bold mt-2">Web + Agenda + Fidelización</h2>
+        {/* ── Solución (Bento Grid) ── */}
+        <section id="solucion" className="relative py-24 bg-muted/30">
+          <DecorativeBlob className="absolute top-20 right-0 w-60 h-60 opacity-40" variant="blue" />
+          <DecorativeBlob className="absolute bottom-20 left-0 w-48 h-48 opacity-30" variant="red" />
+          <div className="container relative z-10 max-w-5xl">
+            <div className="text-center mb-14">
+              <span className="text-xs font-semibold text-azul-rey uppercase tracking-[0.2em]">La solución</span>
+              <h2 className="text-3xl md:text-4xl font-bold mt-3">Web + Agenda + Fidelización</h2>
+              <p className="mt-3 text-muted-foreground max-w-md mx-auto">
+                Todo lo que necesitas para digitalizar tu taller en un solo lugar
+              </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { icon: Globe, title: "Web Profesional", desc: "Sitio web optimizado para Google, adaptado a móviles, con tu información y servicios." },
-                { icon: Calendar, title: "Agenda Online", desc: "Tus clientes reservan desde tu web. Recibes confirmaciones y recordatorios automáticos." },
-                { icon: Award, title: "Fidelización Digital", desc: "Programa de sellos tipo cafetería. Cada servicio = 1 sello. Premia la recompra." },
-              ].map((item, i) => (
-                <div key={item.title} className="rounded-xl border border-border-subtil bg-card p-6 text-center hover:bg-white hover:border-border-medio transition-all duration-200 animate-fade-in-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
-                  <div className="w-10 h-10 rounded-lg bg-azul-rey/10 flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="h-5 w-5 text-azul-rey" />
-                  </div>
-                  <h3 className="font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="md:col-span-2 md:row-span-2 rounded-2xl border border-border-subtil bg-card p-8 card-lift hover:border-azul-rey/30 cursor-pointer animate-fade-in-up">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-azul-rey/20 to-celeste-cielo/20 flex items-center justify-center mb-5">
+                  <Globe className="h-6 w-6 text-azul-rey" />
                 </div>
-              ))}
+                <h3 className="text-xl font-bold mb-3">Web Profesional</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Sitio web optimizado para Google, adaptado a móviles, con tu información, servicios y galería de trabajos.
+                </p>
+                <ul className="mt-5 space-y-2">
+                  {["Dominio personalizado", "Optimizado SEO local", "Galería de trabajos"].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckIcon className="h-3.5 w-3.5 text-azul-rey shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="md:col-span-2 rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-celeste-cielo/30 cursor-pointer animate-fade-in-up animation-delay-100">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-celeste-cielo/20 to-azul-rey/20 flex items-center justify-center mb-4">
+                  <Calendar className="h-5 w-5 text-celeste-cielo" />
+                </div>
+                <h3 className="font-bold mb-2">Agenda Online</h3>
+                <p className="text-sm text-muted-foreground">Tus clientes reservan desde tu web. Recibes confirmaciones y recordatorios automáticos.</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-amber-400/30 cursor-pointer animate-fade-in-up animation-delay-200">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center mb-4">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                </div>
+                <h3 className="font-bold mb-2">Notificaciones</h3>
+                <p className="text-sm text-muted-foreground">Recordatorios automáticos por WhatsApp. Menos ausencias, más clientes.</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtil bg-card p-6 card-lift hover:border-green-400/30 cursor-pointer animate-fade-in-up animation-delay-300">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400/20 to-emerald-400/20 flex items-center justify-center mb-4">
+                  <Smartphone className="h-5 w-5 text-green-500" />
+                </div>
+                <h3 className="font-bold mb-2">Panel Móvil</h3>
+                <p className="text-sm text-muted-foreground">Gestiona tu taller desde el celular. Dashboard responsive con todo al alcance.</p>
+              </div>
             </div>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtil to-transparent" />
         </section>
 
-        <section id="beneficios" className="border-t py-20">
-          <div className="container max-w-4xl">
-            <div className="text-center mb-12">
-              <span className="text-xs font-semibold text-azul-rey uppercase tracking-wider">Beneficios</span>
-              <h2 className="text-3xl font-bold mt-2">Por qué elegir CLICIO</h2>
+        {/* ── Beneficios ── */}
+        <section id="beneficios" className="relative py-24">
+          <DecorativeBlob className="absolute top-0 right-1/3 w-56 h-56 opacity-30" variant="blue" />
+          <div className="container relative z-10 max-w-5xl">
+            <div className="text-center mb-14">
+              <span className="text-xs font-semibold text-azul-rey uppercase tracking-[0.2em]">Beneficios</span>
+              <h2 className="text-3xl md:text-4xl font-bold mt-3">Por qué elegir CLICIO</h2>
             </div>
             <div className="grid md:grid-cols-4 gap-4">
               {[
-                { icon: TrendingUp, text: "Más clientes", desc: "Capta clientes con web profesional" },
-                { icon: Calendar, text: "Más reservas", desc: "Agenda online 24/7" },
-                { icon: Users, text: "Más organización", desc: "CRM simple y potente" },
-                { icon: Award, text: "Más recompra", desc: "Fidelización automática" },
-              ].map((b, i) => (
-                <div key={b.text} className="rounded-xl border border-border-subtil bg-card p-5 text-center hover:bg-white hover:border-border-medio transition-all duration-200 animate-fade-in-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
-                  <div className="w-9 h-9 rounded-lg bg-azul-rey/10 flex items-center justify-center mx-auto mb-3">
-                    <b.icon className="h-4 w-4 text-azul-rey" />
+                { icon: TrendingUp, text: "Más clientes", desc: "Capta clientes con web profesional", color: "azul-rey" },
+                { icon: Calendar, text: "Más reservas", desc: "Agenda online 24/7", color: "celeste-cielo" },
+                { icon: Shield, text: "Más organización", desc: "CRM simple y potente", color: "green" },
+                { icon: Award, text: "Más recompra", desc: "Fidelización automática", color: "amber" },
+              ].map((b, i) => {
+                const gradientMap: Record<string, string> = {
+                  "azul-rey": "from-azul-rey/20 to-celeste-cielo/20",
+                  "celeste-cielo": "from-celeste-cielo/20 to-azul-rey/20",
+                  "green": "from-green-400/20 to-emerald-400/20",
+                  "amber": "from-amber-400/20 to-orange-400/20",
+                }
+                return (
+                  <div key={b.text} className="group rounded-xl border border-border-subtil bg-card p-6 text-center card-lift cursor-pointer animate-fade-in-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradientMap[b.color]} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                      <b.icon className="h-5 w-5" style={{ color: `var(--color-${b.color === "green" ? "green" : b.color === "amber" ? "amber" : b.color.includes("azul") ? "azul-rey" : "celeste-cielo"})` }} />
+                    </div>
+                    <p className="font-semibold">{b.text}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5">{b.desc}</p>
                   </div>
-                  <p className="font-semibold text-sm">{b.text}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{b.desc}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtil to-transparent" />
         </section>
 
-        {/* Testimonios */}
-        <section className="border-t py-20 bg-muted/50">
-          <div className="container max-w-4xl">
-            <div className="text-center mb-10">
-              <span className="text-xs font-semibold text-azul-rey uppercase tracking-wider">Testimonios</span>
-              <h2 className="text-3xl font-bold mt-2">Lo que dicen los talleres</h2>
+        {/* ── Testimonios ── */}
+        <section className="relative py-24 bg-muted/30">
+          <DecorativeBlob className="absolute top-10 left-1/4 w-52 h-52 opacity-40" variant="amber" />
+          <DecorativeBlob className="absolute bottom-10 right-1/4 w-44 h-44 opacity-30" variant="blue" />
+          <div className="container relative z-10 max-w-5xl">
+            <div className="text-center mb-14">
+              <span className="text-xs font-semibold text-azul-rey uppercase tracking-[0.2em]">Testimonios</span>
+              <h2 className="text-3xl md:text-4xl font-bold mt-3">Lo que dicen los talleres</h2>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-5">
               {[
                 { name: "Carlos M.", workshop: "Taller Mecánico Pérez", text: "Desde que uso CLICIO, las reservas llegaron solas. Ya no pierdo llamadas perdidas." },
                 { name: "Andrea L.", workshop: "Auto Servicio La Vega", text: "La fidelización es un antes y después. Mis clientes vuelven por los sellos." },
                 { name: "Pedro G.", workshop: "Gomería Express", text: "En 15 minutos tenía mi página lista. Mis clientes agendan solos." },
               ].map((t, i) => (
-                <div key={t.name} className="rounded-xl border border-border-subtil bg-card p-6 animate-fade-in-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
-                  <div className="flex items-center gap-1 mb-3">
+                <div key={t.name} className="group relative rounded-xl border border-border-subtil bg-card p-6 card-lift animate-fade-in-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
+                  <div className="absolute -top-2 -left-2 text-4xl leading-none text-azul-rey/10 font-serif pointer-events-none">&ldquo;</div>
+                  <div className="flex items-center gap-0.5 mb-4">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">"{t.text}"</p>
-                  <p className="text-sm font-semibold">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.workshop}</p>
+                  <p className="text-sm text-muted-foreground mb-5 leading-relaxed relative z-10">&ldquo;{t.text}&rdquo;</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-azul-rey to-celeste-cielo flex items-center justify-center text-[10px] font-bold text-white">
+                      {t.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.workshop}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtil to-transparent" />
         </section>
 
-        <section id="precio" className="border-t py-20">
-          <div className="container max-w-md">
-            <div className="rounded-xl border-2 border-azul-rey/30 bg-gradient-to-b from-azul-rey/[0.03] to-transparent p-8 text-center relative">
-              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-azul-rey text-white text-xs font-semibold rounded-full">Plan Único</span>
-              <h2 className="text-3xl font-bold mt-2">Precio Único</h2>
-              <p className="mt-6 text-5xl font-bold">$39.990 <span className="text-lg font-normal text-muted-foreground">/mes</span></p>
-              <p className="mt-2 text-sm text-muted-foreground">Todo incluido. Sin cargos ocultos.</p>
-              <ul className="mt-6 space-y-3 text-left">
+        {/* ── Precio ── */}
+        <section id="precio" className="relative py-24">
+          <DecorativeBlob className="absolute top-20 left-1/3 w-64 h-64 opacity-40" variant="dark" />
+          <div className="container relative z-10 max-w-md">
+            <div className="relative rounded-2xl border-2 border-azul-rey/20 bg-gradient-to-b from-white dark:from-gray-800 to-card p-8 text-center shadow-xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-azul-rey/[0.03] to-transparent pointer-events-none" />
+              <span className="relative z-10 inline-flex px-4 py-1 bg-azul-rey text-white text-xs font-semibold rounded-full mb-4">Plan Único</span>
+              <h2 className="relative z-10 text-3xl font-bold">Precio Único</h2>
+              <p className="relative z-10 mt-6">
+                <span className="text-5xl font-bold">$39.990</span>
+                <span className="text-lg font-normal text-muted-foreground">/mes</span>
+              </p>
+              <p className="relative z-10 mt-2 text-sm text-muted-foreground">Todo incluido. Sin cargos ocultos.</p>
+              <ul className="relative z-10 mt-6 space-y-3 text-left max-w-xs mx-auto">
                 {["Página web profesional", "Hosting incluido", "Agenda online", "CRM básico", "WhatsApp automatizado", "Sistema de fidelización"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm">
                     <CheckIcon className="h-4 w-4 text-azul-rey shrink-0" />
@@ -174,20 +323,23 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button size="lg" className="mt-6 w-full" asChild>
-                <Link href="/signup">Quiero mi sistema</Link>
-              </Button>
+              <div className="relative z-10 mt-8">
+                <Button size="lg" className="w-full gap-2 shine-overlay" asChild>
+                  <Link href="/signup">Quiero mi sistema <ArrowRight className="h-4 w-4" /></Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="border-t py-20 bg-muted/50 text-center">
-          <div className="container max-w-xl">
-            <h2 className="text-2xl font-bold">Comienza hoy</h2>
-            <p className="mt-4 text-muted-foreground">En menos de 15 minutos tu taller tiene presencia profesional en internet.</p>
-            <div className="mt-6 flex gap-3 justify-center">
-              <Button size="lg" asChild>
-                <Link href="/signup">Solicitar Demo</Link>
+        {/* ── CTA ── */}
+        <section className="relative py-24 bg-muted/30 dots-bg">
+          <div className="container relative z-10 max-w-xl text-center">
+            <h2 className="text-3xl md:text-4xl font-bold">Comienza hoy</h2>
+            <p className="mt-4 text-muted-foreground text-lg">En menos de 15 minutos tu taller tiene presencia profesional en internet.</p>
+            <div className="mt-8 flex gap-3 justify-center">
+              <Button size="lg" className="gap-2" asChild>
+                <Link href="/signup">Solicitar Demo <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
                 <Link href="#solucion">Ver más</Link>
@@ -197,8 +349,14 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
+      <footer className="border-t py-10 text-center text-sm text-muted-foreground">
         <div className="container">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-azul-rey to-celeste-cielo flex items-center justify-center">
+              <span className="text-[8px] font-bold text-white">C</span>
+            </div>
+            <span className="font-bold text-foreground">CLICIO</span>
+          </div>
           <p>© 2026 CLICIO. Todos los derechos reservados.</p>
         </div>
       </footer>
