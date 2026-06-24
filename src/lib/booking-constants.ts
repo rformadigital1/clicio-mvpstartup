@@ -6,6 +6,7 @@ export const STATUS_LABELS: Record<BookingStatus, string> = {
   in_progress: "En progreso",
   ready: "Listo",
   delivered: "Entregado",
+  cancelled: "Anulado",
 }
 
 export const STATUS_COLORS: Record<BookingStatus, string> = {
@@ -14,6 +15,7 @@ export const STATUS_COLORS: Record<BookingStatus, string> = {
   in_progress: "#fee2e2",
   ready: "#dcfce7",
   delivered: "#f3f4f6",
+  cancelled: "#e5e7eb",
 }
 
 export const STATUS_TEXT_COLORS: Record<BookingStatus, string> = {
@@ -22,6 +24,7 @@ export const STATUS_TEXT_COLORS: Record<BookingStatus, string> = {
   in_progress: "#e3242b",
   ready: "#166534",
   delivered: "#4b5563",
+  cancelled: "#6b7280",
 }
 
 export const STATUS_BADGE_CLASSES: Record<BookingStatus, string> = {
@@ -30,4 +33,5 @@ export const STATUS_BADGE_CLASSES: Record<BookingStatus, string> = {
   in_progress: "bg-rojo/10 text-rojo",
   ready: "bg-green-100 text-green-800",
   delivered: "bg-gray-100 text-gray-700",
+  cancelled: "bg-gray-200 text-gray-500",
 }

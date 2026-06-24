@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil, Search, Download } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil, Search, Download, RotateCcw } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 import { STATUS_LABELS, STATUS_COLORS, STATUS_TEXT_COLORS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
+import BookingActions from "@/components/booking/booking-actions"
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 const HOUR_HEIGHT = 56
@@ -78,6 +79,11 @@ export default function CalendarPage() {
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadWeek() }, [weekStart, tenantId])
   useEffect(() => { if (tenantId) loadAgenda() }, [tenantId])
+
+  async function refreshBookings() {
+    await loadWeek()
+    await loadAgenda()
+  }
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -692,11 +698,12 @@ export default function CalendarPage() {
                 <th className="text-left p-3 font-medium">Vehículo</th>
                 <th className="text-left p-3 font-medium">Servicios</th>
                 <th className="text-left p-3 font-medium">Estado</th>
+                <th className="text-left p-3 font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredAgenda.length === 0 ? (
-                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">
+                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">
                   Sin resultados
                 </td></tr>
               ) : (
@@ -712,6 +719,9 @@ export default function CalendarPage() {
                       <Badge className={STATUS_BADGE_CLASSES[b.status as BookingStatus]}>
                         {STATUS_LABELS[b.status as BookingStatus]}
                       </Badge>
+                    </td>
+                    <td className="p-3">
+                      <BookingActions bookingId={b.id} currentStatus={b.status as BookingStatus} onStatusChange={refreshBookings} />
                     </td>
                   </tr>
                 ))

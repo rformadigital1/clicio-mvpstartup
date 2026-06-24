@@ -11,12 +11,24 @@ import { useToast } from "@/hooks/use-toast"
 import { useRole } from "@/app/dashboard/layout"
 import { AlertDialog } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Users, Trash2, Car, Plus, ExternalLink } from "lucide-react"
+import { Search, Users, Trash2, Car, Plus, ExternalLink, ChevronDown, DollarSign, Calendar } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/ui/page-header"
-import type { Customer, Vehicle } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
+import type { Customer, Vehicle, BookingStatus } from "@/lib/types"
+import { STATUS_LABELS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
+import BookingActions from "@/components/booking/booking-actions"
+import CustomerHistoryModal from "@/components/booking/customer-history-modal"
 import Link from "next/link"
+
+type BookingBrief = {
+  id: string
+  booking_date: string
+  booking_time: string
+  status: BookingStatus
+  services: { name: string; price: number }[]
+  vehicle_plate: string | null
+}
 
 export default function CustomersPage() {
   const supabase = createClient()
@@ -35,6 +47,10 @@ export default function CustomersPage() {
   const [vehBrand, setVehBrand] = useState("")
   const [vehModel, setVehModel] = useState("")
   const [vehYear, setVehYear] = useState("")
+  const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set())
+  const [customerBookings, setCustomerBookings] = useState<Record<string, BookingBrief[]>>({})
+  const [customerStats, setCustomerStats] = useState<Record<string, { totalVisits: number; totalSpent: number }>>({})
+  const [historyCustomerId, setHistoryCustomerId] = useState<string | null>(null)
 
   useEffect(() => { loadCustomers() }, [])
 
@@ -64,7 +80,51 @@ export default function CustomersPage() {
       .select("*")
       .eq("tenant_id", profile.tenant_id)
     setVehicles(vehData ?? [])
+
+    // Load booking stats per customer
+    const { data: bkData } = await supabase
+      .from("bookings")
+      .select("id, customer_id, booking_date, booking_time, status, vehicles(plate), booking_services(services(name, price))")
+      .eq("tenant_id", profile.tenant_id)
+      .order("booking_date", { ascending: false })
+      .order("booking_time", { ascending: false })
+
+    const bkMap: Record<string, BookingBrief[]> = {}
+    const statsMap: Record<string, { totalVisits: number; totalSpent: number }> = {}
+
+    bkData?.forEach((b: any) => {
+      const cid = b.customer_id
+      if (!bkMap[cid]) bkMap[cid] = []
+      if (bkMap[cid].length < 5) {
+        bkMap[cid].push({
+          id: b.id,
+          booking_date: b.booking_date,
+          booking_time: b.booking_time,
+          status: b.status,
+          services: b.booking_services?.map((bs: any) => bs.services).filter(Boolean) ?? [],
+          vehicle_plate: b.vehicles?.plate ?? null,
+        })
+      }
+      if (!statsMap[cid]) statsMap[cid] = { totalVisits: 0, totalSpent: 0 }
+      statsMap[cid].totalVisits++
+      if (b.status === "delivered") {
+        const amt = b.booking_services?.reduce((s: number, bs: any) => s + (bs.services?.price ?? 0), 0) ?? 0
+        statsMap[cid].totalSpent += amt
+      }
+    })
+
+    setCustomerBookings(bkMap)
+    setCustomerStats(statsMap)
     setLoading(false)
+  }
+
+  function toggleExpand(customerId: string) {
+    setExpandedCustomers(prev => {
+      const next = new Set(prev)
+      if (next.has(customerId)) next.delete(customerId)
+      else next.add(customerId)
+      return next
+    })
   }
 
   async function handleAddCustomer(e: React.FormEvent<HTMLFormElement>) {
@@ -186,7 +246,6 @@ export default function CustomersPage() {
         </Dialog>
       </PageHeader>
 
-      {/* Search */}
       <div className="max-w-sm mb-6">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -199,7 +258,6 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Results */}
       {filteredCustomers.length === 0 ? (
         <div className="text-center py-12">
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
@@ -217,51 +275,106 @@ export default function CustomersPage() {
         <>
           <p className="text-sm text-muted-foreground mb-3">{filteredCustomers.length} clientes</p>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredCustomers.map((customer) => (
-              <Card key={customer.id}>
-                <CardHeader className="flex flex-row items-start justify-between">
-                  <CardTitle className="text-base">{customer.name}</CardTitle>
-                  {roleInfo?.isOwner && (
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-1 text-sm">
-                  {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
-                  <Separator className="my-2" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Vehículos</span>
-                    <Button variant="ghost" size="sm" className="h-6 px-1" onClick={() => { setVehicleCustomerId(customer.id); setVehicleDialogOpen(true) }}>
-                      <Plus className="h-3 w-3 mr-1" /> Agregar
-                    </Button>
-                  </div>
-                  {vehicles.filter(v => v.customer_id === customer.id).length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Sin vehículos registrados</p>
-                  ) : (
-                    <div className="space-y-1">
-                      {vehicles.filter(v => v.customer_id === customer.id).map(v => (
-                        <div key={v.id} className="flex items-center justify-between group">
-                          <Link href={`/dashboard/vehicles/${v.id}`} className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors">
-                            <Car className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-medium">{v.plate}</span>
-                            {v.brand && <span className="text-muted-foreground">{v.brand}</span>}
-                            {v.model && <span className="text-muted-foreground">{v.model}</span>}
-                            {v.year && <span className="text-muted-foreground">({v.year})</span>}
-                            <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </Link>
-                          {roleInfo?.isOwner && (
-                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteVehicle(v.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+            {filteredCustomers.map((customer) => {
+              const stats = customerStats[customer.id]
+              const bks = customerBookings[customer.id] ?? []
+              const isExpanded = expandedCustomers.has(customer.id)
+
+              return (
+                <Card key={customer.id}>
+                  <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base">{customer.name}</CardTitle>
+                      {stats && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {stats.totalVisits} visitas · ${stats.totalSpent.toLocaleString("es-CL")} gastado
+                        </p>
+                      )}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    {roleInfo?.isOwner && (
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-1 text-sm">
+                    {customer.phone && <p className="text-muted-foreground">{customer.phone}</p>}
+                    <Separator className="my-2" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Vehículos</span>
+                      <Button variant="ghost" size="sm" className="h-6 px-1" onClick={() => { setVehicleCustomerId(customer.id); setVehicleDialogOpen(true) }}>
+                        <Plus className="h-3 w-3 mr-1" /> Agregar
+                      </Button>
+                    </div>
+                    {vehicles.filter(v => v.customer_id === customer.id).length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Sin vehículos registrados</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {vehicles.filter(v => v.customer_id === customer.id).map(v => (
+                          <div key={v.id} className="flex items-center justify-between group">
+                            <Link href={`/dashboard/vehicles/${v.id}`} className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors">
+                              <Car className="h-3 w-3 text-muted-foreground" />
+                              <span className="font-medium">{v.plate}</span>
+                              {v.brand && <span className="text-muted-foreground">{v.brand}</span>}
+                              {v.model && <span className="text-muted-foreground">{v.model}</span>}
+                              {v.year && <span className="text-muted-foreground">({v.year})</span>}
+                              <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </Link>
+                            {roleInfo?.isOwner && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteVehicle(v.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {bks.length > 0 && (
+                      <>
+                        <Separator className="my-2" />
+                        <button
+                          onClick={() => toggleExpand(customer.id)}
+                          className="flex items-center justify-between w-full text-xs text-muted-foreground font-medium uppercase tracking-wide hover:text-foreground transition-colors"
+                        >
+                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Últimos servicios</span>
+                          <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        </button>
+                        {isExpanded && (
+                          <div className="space-y-2 mt-2">
+                            {bks.map(b => {
+                              const svcNames = b.services.map(s => s.name).join(", ")
+                              const amount = b.services.reduce((s, svc) => s + svc.price, 0)
+                              return (
+                                <div key={b.id} className="border rounded-lg p-2 space-y-1.5">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="font-medium">{b.booking_date} {b.booking_time?.slice(0, 5)}</span>
+                                    <Badge className={STATUS_BADGE_CLASSES[b.status]}>
+                                      {STATUS_LABELS[b.status]}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {svcNames} <span className="font-medium">${amount.toLocaleString("es-CL")}</span>
+                                    {b.vehicle_plate && <span> · {b.vehicle_plate}</span>}
+                                  </p>
+                                  <BookingActions bookingId={b.id} currentStatus={b.status} onStatusChange={() => loadCustomers()} />
+                                </div>
+                              )
+                            })}
+                            <button
+                              onClick={() => setHistoryCustomerId(customer.id)}
+                              className="text-xs text-azul-rey hover:underline w-full text-left"
+                            >
+                              Ver historial completo →
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </>
       )}
@@ -301,6 +414,8 @@ export default function CustomersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CustomerHistoryModal customerId={historyCustomerId ?? ""} open={!!historyCustomerId} onClose={() => setHistoryCustomerId(null)} />
     </div>
   )
 }

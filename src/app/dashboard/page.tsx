@@ -4,10 +4,12 @@ import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Wrench, CheckCircle2, Calendar, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
+import { Clock, Wrench, CheckCircle2, Calendar, DollarSign, TrendingUp, TrendingDown, User } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { BookingStatus } from "@/lib/types"
 import { STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_TEXT_COLORS } from "@/lib/booking-constants"
+import BookingActions from "@/components/booking/booking-actions"
+import CustomerHistoryModal from "@/components/booking/customer-history-modal"
 
 export default function DashboardPage() {
   const supabase = createClient()
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const [totalCustomers, setTotalCustomers] = useState(0)
   const [todayRevenue, setTodayRevenue] = useState(0)
   const [todayPaid, setTodayPaid] = useState(0)
+  const [historyCustomerId, setHistoryCustomerId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadData() }, [])
@@ -245,7 +248,7 @@ export default function DashboardPage() {
               </div>
             </div>
           ) : (
-            <TimelineCard key={slot.data.id} booking={slot.data} currentMinutes={currentMinutes} />
+            <TimelineCard key={slot.data.id} booking={slot.data} currentMinutes={currentMinutes} onViewHistory={() => setHistoryCustomerId(slot.data.customer_id)} onStatusChange={() => loadData()} />
           )
         )}
       </div>
@@ -279,11 +282,13 @@ export default function DashboardPage() {
           <p className="text-xl font-bold">${monthBookings > 0 ? Math.round(monthRevenue / monthBookings).toLocaleString("es-CL") : "0"}</p>
         </div>
       </div>
+
+      <CustomerHistoryModal customerId={historyCustomerId ?? ""} open={!!historyCustomerId} onClose={() => setHistoryCustomerId(null)} />
     </div>
   )
 }
 
-function TimelineCard({ booking, currentMinutes }: { booking: any; currentMinutes: number }) {
+function TimelineCard({ booking, currentMinutes, onViewHistory, onStatusChange }: { booking: any; currentMinutes: number; onViewHistory: () => void; onStatusChange: () => void }) {
   const status = booking.status as BookingStatus
   const [h, m] = (booking.booking_time ?? "08:00").split(":").map(Number)
   const startMinutes = h * 60 + m
@@ -305,7 +310,9 @@ function TimelineCard({ booking, currentMinutes }: { booking: any; currentMinute
         style={{ borderLeft: `3px solid ${STATUS_TEXT_COLORS[status] ?? "#374151"}` }}
       >
         <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="font-semibold text-sm">{booking.customers?.name}</p>
+          <button onClick={onViewHistory} className="font-semibold text-sm hover:text-azul-rey transition-colors text-left">
+            {booking.customers?.name}
+          </button>
           <Badge className={STATUS_BADGE_CLASSES[status]}>{STATUS_LABELS[status]}</Badge>
         </div>
         {booking.vehicles && (
@@ -317,8 +324,11 @@ function TimelineCard({ booking, currentMinutes }: { booking: any; currentMinute
           <p className="text-xs text-muted-foreground mb-1">{servicesList.join(", ")}</p>
         )}
         {booking.customers?.phone && (
-          <p className="text-xs text-muted-foreground">{booking.customers.phone}</p>
+          <p className="text-xs text-muted-foreground mb-1">{booking.customers.phone}</p>
         )}
+        <div className="mt-2">
+          <BookingActions bookingId={booking.id} currentStatus={status} onStatusChange={onStatusChange} />
+        </div>
       </div>
     </div>
   )

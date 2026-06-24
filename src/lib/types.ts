@@ -77,7 +77,7 @@ export interface Booking {
   booking_services?: BookingService[]
 }
 
-export type BookingStatus = "reserved" | "waiting" | "in_progress" | "ready" | "delivered"
+export type BookingStatus = "reserved" | "waiting" | "in_progress" | "ready" | "delivered" | "cancelled"
 
 export interface LoyaltyRule {
   id: string
