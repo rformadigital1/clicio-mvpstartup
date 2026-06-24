@@ -306,7 +306,7 @@ function TimelineCard({ booking, currentMinutes, onViewHistory }: { booking: any
         {isNow && <div className="h-1.5 w-1.5 rounded-full bg-azul-rey mx-auto mt-1" />}
       </div>
       <div
-        className="flex-1 bg-white border border-border-subtil rounded-lg p-3 transition-all hover:border-border-medio hover:shadow-xs flex items-start gap-3"
+        className="flex-1 bg-card border border-border-subtil rounded-lg p-3 transition-all hover:border-border-medio hover:shadow-xs flex items-start gap-3"
         style={{ borderLeft: `3px solid ${STATUS_TEXT_COLORS[status] ?? "#374151"}` }}
       >
         <button onClick={onViewHistory} className="w-8 h-8 rounded-full bg-azul-rey/10 text-azul-rey text-sm font-bold shrink-0 flex items-center justify-center hover:bg-azul-rey/20 transition-colors mt-0.5">

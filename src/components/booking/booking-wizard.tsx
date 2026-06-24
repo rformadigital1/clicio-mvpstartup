@@ -251,7 +251,7 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
   if (success) {
     const selServices = services.filter((s) => selectedServiceIds.includes(s.id))
     return (
-      <div className="bg-white rounded-xl border border-border-subtil shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl border border-border-subtil shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-green-600 to-green-500 p-6 sm:p-8 text-center text-white">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/20 mb-4 animate-bounce">
             <CheckCircle className="h-8 w-8" />
@@ -305,7 +305,7 @@ export function BookingWizard({ tenant, services, businessHours }: BookingWizard
   }
 
   return (
-    <div className="bg-white rounded-xl border border-border-subtil shadow-sm p-5 sm:p-8">
+    <div className="bg-card rounded-xl border border-border-subtil shadow-sm p-5 sm:p-8">
       <WizardProgress currentStep={step} />
 
       {error && <p className="text-sm text-destructive mb-4 text-center">{error}</p>}

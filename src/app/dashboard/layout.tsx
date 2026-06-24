@@ -198,8 +198,8 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 relative ${
                       isActive
-                        ? "bg-white text-azul-rey font-medium shadow-sm before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-azul-rey before:to-celeste-cielo"
-                        : "text-muted-foreground hover:text-azul-rey hover:bg-white/50"
+                        ? "bg-card text-azul-rey font-medium shadow-sm before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-azul-rey before:to-celeste-cielo"
+                        : "text-muted-foreground hover:text-azul-rey hover:bg-card/50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -214,8 +214,8 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                     onClick={() => setSettingsOpen(!settingsOpen)}
                     className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm transition-colors ${
                       settingsOpen || pathname.startsWith("/dashboard/settings")
-                        ? "bg-white text-azul-rey font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+                        ? "bg-card text-azul-rey font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-card/50"
                     }`}
                   >
                     <span className="flex items-center gap-3">

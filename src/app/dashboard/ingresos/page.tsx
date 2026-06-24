@@ -182,7 +182,7 @@ export default function IngresosPage() {
               total = svcs.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
             }
             return (
-              <div key={b.id} className="bg-white border border-border-subtil rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div key={b.id} className="bg-card border border-border-subtil rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                 <div className="sm:w-28 shrink-0">
                   <p className="text-sm font-medium">{b.booking_date?.slice(0, 10)}</p>
                   <p className="text-xs text-muted-foreground">{b.booking_time?.slice(0, 5)} hrs</p>

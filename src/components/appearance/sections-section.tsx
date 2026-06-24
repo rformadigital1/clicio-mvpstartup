@@ -65,7 +65,7 @@ function SectionRow({
   onMoveUp: () => void; onMoveDown: () => void; onToggle: (v: boolean) => void
 }) {
   return (
-    <div className="flex items-center gap-2 py-2 px-3 rounded-lg border border-border-subtil bg-white">
+    <div className="flex items-center gap-2 py-2 px-3 rounded-lg border border-border-subtil bg-card">
       <button
         onClick={onMoveUp}
         disabled={isFirst}
