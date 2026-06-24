@@ -714,7 +714,7 @@ export default function CalendarPage() {
                 </td></tr>
               ) : (
                 filteredAgenda.map(b => (
-                  <tr key={b.id} className="border-b hover:bg-white/50 transition-colors">
+                  <tr key={b.id} className="border-b hover:bg-bg-superficie transition-colors">
                     <td className="p-3">{b.booking_date}</td>
                     <td className="p-3">{b.booking_time?.slice(0, 5)}</td>
                     <td className="p-3">{b.customers?.name}</td>

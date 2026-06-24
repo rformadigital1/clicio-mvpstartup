@@ -295,9 +295,10 @@ function TimelineCard({ booking, currentMinutes, onViewHistory }: { booking: any
   const isNow = startMinutes <= currentMinutes && currentMinutes < startMinutes + 60
 
   const servicesList = booking.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean) ?? []
+  const initials = (booking.customers?.name ?? "?").charAt(0).toUpperCase()
 
   return (
-    <div className={`flex items-start gap-4 py-2 ${isPast ? "opacity-60" : ""} ${isNow ? "opacity-100" : ""}`}>
+    <div className={`flex items-start gap-3 py-2 ${isPast ? "opacity-60" : ""} ${isNow ? "opacity-100" : ""}`}>
       <div className="w-14 text-right shrink-0 pt-2">
         <span className={`text-xs font-medium ${isNow ? "text-azul-rey" : "text-muted-foreground"}`}>
           {booking.booking_time?.slice(0, 5)}
@@ -305,26 +306,31 @@ function TimelineCard({ booking, currentMinutes, onViewHistory }: { booking: any
         {isNow && <div className="h-1.5 w-1.5 rounded-full bg-azul-rey mx-auto mt-1" />}
       </div>
       <div
-        className="flex-1 bg-white border border-border-subtil rounded-lg p-3 transition-colors hover:border-border-medio"
+        className="flex-1 bg-white border border-border-subtil rounded-lg p-3 transition-all hover:border-border-medio hover:shadow-xs flex items-start gap-3"
         style={{ borderLeft: `3px solid ${STATUS_TEXT_COLORS[status] ?? "#374151"}` }}
       >
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <button onClick={onViewHistory} className="font-semibold text-sm hover:text-azul-rey transition-colors text-left">
-            {booking.customers?.name}
-          </button>
-          <Badge className={STATUS_BADGE_CLASSES[status]}>{STATUS_LABELS[status]}</Badge>
+        <button onClick={onViewHistory} className="w-8 h-8 rounded-full bg-azul-rey/10 text-azul-rey text-sm font-bold shrink-0 flex items-center justify-center hover:bg-azul-rey/20 transition-colors mt-0.5">
+          {initials}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <button onClick={onViewHistory} className="font-semibold text-sm hover:text-azul-rey transition-colors text-left truncate">
+              {booking.customers?.name}
+            </button>
+            <Badge className={`${STATUS_BADGE_CLASSES[status]} shrink-0`}>{STATUS_LABELS[status]}</Badge>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+            {booking.vehicles && (
+              <span>{booking.vehicles.plate}</span>
+            )}
+            {servicesList.length > 0 && (
+              <>
+                <span className="text-border-medio">|</span>
+                <span className="truncate">{servicesList.join(", ")}</span>
+              </>
+            )}
+          </div>
         </div>
-        {booking.vehicles && (
-          <p className="text-xs text-muted-foreground mb-1">
-            {booking.vehicles.plate}{booking.vehicles.brand ? ` — ${booking.vehicles.brand}` : ""}
-          </p>
-        )}
-        {servicesList.length > 0 && (
-          <p className="text-xs text-muted-foreground mb-1">{servicesList.join(", ")}</p>
-        )}
-        {booking.customers?.phone && (
-          <p className="text-xs text-muted-foreground mb-1">{booking.customers.phone}</p>
-        )}
       </div>
     </div>
   )

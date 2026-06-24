@@ -1,8 +1,15 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;1,700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @plugin "tailwindcss-animate";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;1,700&family=JetBrains+Mono:wght@400;500&display=swap');
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(12px); }
@@ -28,19 +35,19 @@
   --card-foreground: #0F172A;
   --popover: #FFFFFF;
   --popover-foreground: #0F172A;
-  --primary: #1A3A8A;
+  --primary: var(--color-azul-rey);
   --primary-foreground: #FFFFFF;
-  --secondary: #4A90D9;
+  --secondary: var(--color-celeste-cielo);
   --secondary-foreground: #FFFFFF;
   --muted: #F0EEEC;
   --muted-foreground: #475569;
   --accent: #FFFFFF;
-  --accent-foreground: #1A3A8A;
-  --destructive: #E3242B;
+  --accent-foreground: var(--color-azul-rey);
+  --destructive: var(--color-rojo);
   --destructive-foreground: #FFFFFF;
-  --border: #E2E0DE;
-  --input: #D4D2D0;
-  --ring: #1A3A8A;
+  --border: var(--color-border-subtil);
+  --input: var(--color-border-medio);
+  --ring: var(--color-azul-rey);
   --radius: 0.625rem;
 }
 
@@ -51,19 +58,19 @@
   --card-foreground: #F8FAFC;
   --popover: #1E293B;
   --popover-foreground: #F8FAFC;
-  --primary: #4A90D9;
+  --primary: var(--color-celeste-cielo);
   --primary-foreground: #0F172A;
-  --secondary: #1A3A8A;
+  --secondary: var(--color-azul-rey);
   --secondary-foreground: #F8FAFC;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
   --accent: #1E293B;
-  --accent-foreground: #4A90D9;
+  --accent-foreground: var(--color-celeste-cielo);
   --destructive: #EF4444;
   --destructive-foreground: #F8FAFC;
   --border: #334155;
   --input: #334155;
-  --ring: #4A90D9;
+  --ring: var(--color-celeste-cielo);
 }
 
 @theme inline {
@@ -117,4 +124,8 @@
     background-size: 400% 400%;
     animation: gradient-shift 15s ease infinite;
   }
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
 }

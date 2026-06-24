@@ -14,6 +14,7 @@ import {
 import { ToastProvider } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, BarChart3, ExternalLink, DollarSign, ChevronDown, Info, Clock, Image, UsersRound, Palette } from "lucide-react"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useState, useEffect, createContext, useContext } from "react"
 
 type RoleInfo = {
@@ -98,8 +99,23 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
   if (loading || !roleInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Cargando...</p>
+      <div className="min-h-screen p-4 space-y-4">
+        <div className="flex gap-4">
+          <div className="hidden md:block w-64 space-y-2">
+            <div className="h-6 bg-bg-superficie rounded animate-pulse" />
+            <div className="h-6 bg-bg-superficie rounded animate-pulse w-3/4" />
+            <div className="h-6 bg-bg-superficie rounded animate-pulse w-1/2" />
+          </div>
+          <div className="flex-1 space-y-4">
+            <div className="h-8 bg-bg-superficie rounded animate-pulse w-56" />
+            <div className="h-4 bg-bg-superficie rounded animate-pulse w-72" />
+            <div className="flex gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 flex-1 bg-bg-superficie rounded-lg animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -115,7 +131,8 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
             <Link href="/dashboard" className="flex items-center gap-2">
               <span className="text-lg font-bold">CLICIO</span>
             </Link>
-            <div className="ml-auto flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-3">
+              <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="h-9 w-9 rounded-full overflow-hidden border-2 border-border-subtil hover:border-azul-rey transition-colors">
@@ -167,14 +184,14 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors group ${
                       isActive
                         ? "bg-white text-azul-rey font-medium border-l-2 border-azul-rey rounded-none rounded-r-lg"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+                        : "text-muted-foreground hover:text-azul-rey hover:bg-white/50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className={`h-4 w-4 transition-colors ${isActive ? "text-azul-rey" : "group-hover:text-azul-rey"}`} />
                     {item.label}
                   </Link>
                 )
