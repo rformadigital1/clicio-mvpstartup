@@ -59,7 +59,7 @@ export function PricingSection() {
 
             <div className="mt-6">
               <span className="text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                $39.990
+                $24.990
               </span>
               <span className="text-lg font-normal text-muted-foreground ml-2">/mes</span>
             </div>
