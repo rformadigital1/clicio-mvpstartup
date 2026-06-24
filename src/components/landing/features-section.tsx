@@ -64,7 +64,7 @@ export function FeaturesSection() {
       <div className="absolute top-40 -left-32 w-80 h-80 rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-40 -right-32 w-80 h-80 rounded-full bg-pink-500/10 blur-[100px] pointer-events-none" />
 
-      <div className="container relative z-10 max-w-6xl">
+      <div className="container mx-auto relative z-10 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

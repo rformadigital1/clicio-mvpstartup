@@ -10,7 +10,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen overflow-hidden">
       <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-shadow">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center">
               <span className="text-xs font-bold text-white">C</span>
@@ -52,7 +52,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t border-border/50 py-10 text-center text-sm text-muted-foreground">
-        <div className="container">
+        <div className="container mx-auto">
           <div className="flex items-center justify-center gap-2 mb-3">
             <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center">
               <span className="text-[8px] font-bold text-white">C</span>

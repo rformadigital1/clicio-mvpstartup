@@ -25,7 +25,7 @@ export function PricingSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5 }}
-        className="container relative z-10 max-w-md text-center"
+        className="container mx-auto relative z-10 max-w-md text-center"
       >
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-4 py-1.5 text-sm backdrop-blur-sm mb-4">
           <span className="relative flex h-2 w-2">

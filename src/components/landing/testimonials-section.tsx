@@ -49,7 +49,7 @@ export function TestimonialsSection() {
       <div className="absolute top-20 left-1/4 w-52 h-52 rounded-full bg-purple-500/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-20 right-1/4 w-44 h-44 rounded-full bg-pink-500/10 blur-[100px] pointer-events-none" />
 
-      <div className="container relative z-10 max-w-5xl">
+      <div className="container mx-auto relative z-10 max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
