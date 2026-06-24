@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { checkAvailability } from "@/lib/availability"
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Clock, User, Car, Pencil, Search, Download } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Booking, BookingStatus, Customer, Service, Vehicle, BusinessHour } from "@/lib/types"
 import { STATUS_LABELS, STATUS_COLORS, STATUS_TEXT_COLORS, STATUS_BADGE_CLASSES } from "@/lib/booking-constants"
@@ -49,6 +49,11 @@ export default function CalendarPage() {
   const [bizHours, setBizHours] = useState<BusinessHour[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Agenda state
+  const [agendaBookings, setAgendaBookings] = useState<any[]>([])
+  const [agendaSearch, setAgendaSearch] = useState("")
+  const [agendaFilter, setAgendaFilter] = useState<string>("all")
+
   // New booking modal
   const [newOpen, setNewOpen] = useState(false)
   const [newDate, setNewDate] = useState("")
@@ -72,6 +77,7 @@ export default function CalendarPage() {
 
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadWeek() }, [weekStart, tenantId])
+  useEffect(() => { if (tenantId) loadAgenda() }, [tenantId])
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -111,6 +117,19 @@ export default function CalendarPage() {
       .order("booking_time")
 
     setBookings(data ?? [])
+  }
+
+  async function loadAgenda() {
+    if (!tenantId) return
+    const today = new Date().toISOString().slice(0, 10)
+    const { data } = await supabase
+      .from("bookings")
+      .select("*, customers(*), vehicles(*), booking_services(service_id, services(*)))")
+      .eq("tenant_id", tenantId)
+      .gte("booking_date", today)
+      .order("booking_date", { ascending: true })
+      .order("booking_time", { ascending: true })
+    setAgendaBookings(data ?? [])
   }
 
   function totalDuration(booking: any): number {
@@ -280,6 +299,41 @@ export default function CalendarPage() {
     toast({ title: "Estado actualizado" })
     setDetailOpen(false)
     loadWeek()
+  }
+
+  const filteredAgenda = useMemo(() => {
+    return agendaBookings.filter(b => {
+      if (agendaFilter !== "all" && b.status !== agendaFilter) return false
+      if (!agendaSearch) return true
+      const q = agendaSearch.toLowerCase()
+      const name = b.customers?.name?.toLowerCase() ?? ""
+      const plate = b.vehicles?.plate?.toLowerCase() ?? ""
+      const services = b.booking_services?.map((bs: any) => bs.services?.name).join(" ").toLowerCase() ?? ""
+      return name.includes(q) || plate.includes(q) || services.includes(q)
+    })
+  }, [agendaBookings, agendaSearch, agendaFilter])
+
+  function exportAgendaCSV() {
+    const rows = filteredAgenda.map(b => {
+      const servicesStr = b.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean).join(", ") ?? ""
+      return [
+        b.booking_date,
+        b.booking_time?.slice(0, 5),
+        `"${(b.customers?.name ?? "").replace(/"/g, '""')}"`,
+        `"${(b.customers?.phone ?? "").replace(/"/g, '""')}"`,
+        `"${(b.vehicles?.plate ?? "").replace(/"/g, '""')}"`,
+        `"${servicesStr.replace(/"/g, '""')}"`,
+        STATUS_LABELS[b.status as BookingStatus] ?? "",
+      ].join(",")
+    })
+    const csv = ["Fecha,Hora,Cliente,Teléfono,Vehículo,Servicios,Estado", ...rows].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `agenda-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   if (loading) return (
@@ -597,6 +651,75 @@ export default function CalendarPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Agenda Section */}
+      <section className="mt-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg font-semibold">Próximas reservas</h2>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                placeholder="Buscar cliente, patente o servicio..."
+                value={agendaSearch}
+                onChange={e => setAgendaSearch(e.target.value)}
+                className="pl-8 h-9 w-48 sm:w-64 rounded-lg border border-border-subtil bg-background text-sm px-3 focus:outline-none focus:ring-2 focus:ring-azul-rey/30"
+              />
+            </div>
+            <Select value={agendaFilter} onValueChange={setAgendaFilter}>
+              <SelectTrigger className="w-32"><SelectValue placeholder="Filtrar" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={exportAgendaCSV}>
+              <Download className="mr-1 h-4 w-4" /> CSV
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-bg-superficie">
+                <th className="text-left p-3 font-medium">Fecha</th>
+                <th className="text-left p-3 font-medium">Hora</th>
+                <th className="text-left p-3 font-medium">Cliente</th>
+                <th className="text-left p-3 font-medium">Teléfono</th>
+                <th className="text-left p-3 font-medium">Vehículo</th>
+                <th className="text-left p-3 font-medium">Servicios</th>
+                <th className="text-left p-3 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAgenda.length === 0 ? (
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">
+                  Sin resultados
+                </td></tr>
+              ) : (
+                filteredAgenda.map(b => (
+                  <tr key={b.id} className="border-b hover:bg-white/50 transition-colors">
+                    <td className="p-3">{b.booking_date}</td>
+                    <td className="p-3">{b.booking_time?.slice(0, 5)}</td>
+                    <td className="p-3">{b.customers?.name}</td>
+                    <td className="p-3">{b.customers?.phone}</td>
+                    <td className="p-3">{b.vehicles?.plate}</td>
+                    <td className="p-3">{b.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean).join(", ")}</td>
+                    <td className="p-3">
+                      <Badge className={STATUS_BADGE_CLASSES[b.status as BookingStatus]}>
+                        {STATUS_LABELS[b.status as BookingStatus]}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   )
 }
