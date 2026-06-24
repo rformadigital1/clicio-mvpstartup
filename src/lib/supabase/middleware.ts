@@ -1,6 +1,18 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://*.unsplash.com https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https://*.supabase.co https://api.emailjs.com wss://*.supabase.co",
+  "frame-src 'self' https://*.supabase.co",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ")
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -24,6 +36,11 @@ export async function updateSession(request: NextRequest) {
       },
     }
   )
+
+  supabaseResponse.headers.set("Content-Security-Policy", CSP)
+  supabaseResponse.headers.set("X-Content-Type-Options", "nosniff")
+  supabaseResponse.headers.set("X-Frame-Options", "DENY")
+  supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
 
   const { data: { user } } = await supabase.auth.getUser()
 

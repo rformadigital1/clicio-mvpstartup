@@ -20,7 +20,7 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; refCount: number } | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -74,6 +74,14 @@ export default function ServicesPage() {
     if (error) { toast({ title: "Error al eliminar", description: error.message, variant: "destructive" }); return }
     toast({ title: "Servicio eliminado" })
     loadServices()
+  }
+
+  async function promptDelete(id: string, name: string) {
+    const { count } = await supabase
+      .from("booking_services")
+      .select("*", { count: "exact", head: true })
+      .eq("service_id", id)
+    setDeleteTarget({ id, name, refCount: count ?? 0 })
   }
 
   if (loading) return (
@@ -130,7 +138,7 @@ export default function ServicesPage() {
           <Card key={service.id}>
             <CardHeader className="flex flex-row items-start justify-between">
               <CardTitle className="text-base">{service.name}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: service.id, name: service.name })}>
+              <Button variant="ghost" size="icon" onClick={() => promptDelete(service.id, service.name)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -153,10 +161,14 @@ export default function ServicesPage() {
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
-        title="Eliminar servicio"
-        description={`¿Eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        onConfirm={() => { handleDelete(deleteTarget!.id); setDeleteTarget(null) }}
+        title={deleteTarget?.refCount ? "Advertencia" : "Eliminar servicio"}
+        description={
+          deleteTarget?.refCount
+            ? `"${deleteTarget.name}" aparece en ${deleteTarget.refCount} reserva(s). El historial perderá la referencia a este servicio. ¿Eliminar de todas formas?`
+            : `¿Eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`
+        }
+        confirmText={deleteTarget?.refCount ? "Eliminar de todas formas" : "Eliminar"}
+        onConfirm={() => { if (deleteTarget) { handleDelete(deleteTarget.id); setDeleteTarget(null) } }}
       />
     </div>
   )

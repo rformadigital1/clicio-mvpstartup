@@ -143,18 +143,23 @@ export default function TenantSitePage() {
           <span className="ml-auto text-muted-foreground text-xs">↗</span>
         </a>
       )}
-      {config.buttons.instagram.visible && tenant.instagram && (
-        <a
-          href={tenant.instagram}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all"
-        >
-          <InstagramIcon />
-          {config.buttons.instagram.label}
-          <span className="ml-auto text-muted-foreground text-xs">↗</span>
-        </a>
-      )}
+      {config.buttons.instagram.visible && tenant.instagram && (() => {
+        const url = tenant.instagram.trim()
+        const safe = url.startsWith("https://instagram.com/") || url.startsWith("https://www.instagram.com/") || url.startsWith("https://ig.me/")
+        if (!safe) return null
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 w-full bg-[var(--page-card-bg)] border border-border-subtil rounded-lg px-4 py-3 text-sm font-medium hover:border-[var(--page-primary)]/40 hover:shadow-sm transition-all"
+          >
+            <InstagramIcon />
+            {config.buttons.instagram.label}
+            <span className="ml-auto text-muted-foreground text-xs">↗</span>
+          </a>
+        )
+      })()}
       {config.buttons.servicios.visible && (
         <button
           onClick={() => servicesRef.current?.scrollIntoView({ behavior: "smooth" })}

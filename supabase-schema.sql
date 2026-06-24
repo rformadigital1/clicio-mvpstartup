@@ -595,6 +595,7 @@ on storage.objects for insert to authenticated
 with check (
   bucket_id = 'service-images'
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+  and public.is_owner()
 );
 
 create policy "service_images_authenticated_update"
@@ -602,10 +603,12 @@ on storage.objects for update to authenticated
 using (
   bucket_id = 'service-images'
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+  and public.is_owner()
 )
 with check (
   bucket_id = 'service-images'
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+  and public.is_owner()
 );
 
 create policy "service_images_authenticated_delete"
@@ -613,6 +616,7 @@ on storage.objects for delete to authenticated
 using (
   bucket_id = 'service-images'
   and (storage.foldername(name))[1] = (select tenant_id::text from profiles where id = auth.uid())
+  and public.is_owner()
 );
 
 -- 17. STORAGE: logos bucket

@@ -51,8 +51,12 @@ export default function GaleriaPage() {
     setUploading(false)
   }
 
-  async function handleDelete(id: string) {
-    const { error } = await supabase.from("gallery_images").delete().eq("id", id)
+  async function handleDelete(img: GalleryImage) {
+    const path = img.image_url.split("/storage/v1/object/public/gallery/")[1]
+    if (path) {
+      await supabase.storage.from(STORAGE_BUCKET).remove([path])
+    }
+    const { error } = await supabase.from("gallery_images").delete().eq("id", img.id)
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return }
     toast({ title: "Imagen eliminada" })
     loadGallery()
@@ -86,7 +90,7 @@ export default function GaleriaPage() {
               {images.map((img) => (
                 <div key={img.id} className="relative group aspect-square">
                   <img src={img.image_url} alt="" className="w-full h-full object-cover rounded-lg" />
-                  <button onClick={() => handleDelete(img.id)}
+                  <button onClick={() => handleDelete(img)}
                     className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

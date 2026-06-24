@@ -319,16 +319,22 @@ export default function CalendarPage() {
     })
   }, [agendaBookings, agendaSearch, agendaFilter])
 
+  function escCsv(val: string): string {
+    const escaped = val.replace(/"/g, '""')
+    if (/^[=+\-@]/.test(val)) return `"'${escaped}"`
+    return `"${escaped}"`
+  }
+
   function exportAgendaCSV() {
     const rows = filteredAgenda.map(b => {
       const servicesStr = b.booking_services?.map((bs: any) => bs.services?.name).filter(Boolean).join(", ") ?? ""
       return [
         b.booking_date,
         b.booking_time?.slice(0, 5),
-        `"${(b.customers?.name ?? "").replace(/"/g, '""')}"`,
-        `"${(b.customers?.phone ?? "").replace(/"/g, '""')}"`,
-        `"${(b.vehicles?.plate ?? "").replace(/"/g, '""')}"`,
-        `"${servicesStr.replace(/"/g, '""')}"`,
+        escCsv(b.customers?.name ?? ""),
+        escCsv(b.customers?.phone ?? ""),
+        escCsv(b.vehicles?.plate ?? ""),
+        escCsv(servicesStr),
         STATUS_LABELS[b.status as BookingStatus] ?? "",
       ].join(",")
     })

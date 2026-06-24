@@ -235,6 +235,12 @@ export default function ReportsPage() {
     setLoading(false)
   }
 
+  function escCsv(val: string): string {
+    const escaped = val.replace(/"/g, '""')
+    if (/^[=+\-@]/.test(val)) return `"'${escaped}"`
+    return `"${escaped}"`
+  }
+
   function exportCSV() {
     if (!metrics) return
     const rows: string[][] = [
@@ -250,7 +256,7 @@ export default function ReportsPage() {
       ["Clientes recurrentes", String(metrics.returningCustomers)],
       [],
       ["Servicio", "Cantidad", "Ingreso"],
-      ...metrics.topServices.map((s: any) => [s.name, String(s.count), String(s.revenue)]),
+      ...metrics.topServices.map((s: any) => [escCsv(s.name), String(s.count), String(s.revenue)]),
       [],
       ["Fecha", "Hora", "Cliente", "Vehículo", "Servicios", "Total", "Estado"],
     ]
@@ -265,9 +271,9 @@ export default function ReportsPage() {
       rows.push([
         b.booking_date ?? "",
         b.booking_time?.slice(0, 5) ?? "",
-        b.customers?.name ?? "",
-        b.vehicles?.plate ?? "",
-        svcNames,
+        escCsv(b.customers?.name ?? ""),
+        escCsv(b.vehicles?.plate ?? ""),
+        escCsv(svcNames),
         String(total),
         b.status ?? "",
       ])

@@ -37,7 +37,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; bookingCount: number; vehicleCount: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -177,11 +177,23 @@ export default function CustomersPage() {
     loadCustomers()
   }
 
-  async function handleDelete(id: string) {
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    const { id } = deleteTarget
     const { error } = await supabase.from("customers").delete().eq("id", id)
     if (error) { toast({ title: "Error al eliminar", description: error.message, variant: "destructive" }); return }
     toast({ title: "Cliente eliminado" })
+    setDeleteTarget(null)
     loadCustomers()
+  }
+
+  async function promptDelete(id: string, name: string) {
+    const { count: bookingCount } = await supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .eq("customer_id", id)
+    const vehicleCount = vehicles.filter(v => v.customer_id === id).length
+    setDeleteTarget({ id, name, bookingCount: bookingCount ?? 0, vehicleCount })
   }
 
   const filteredCustomers = useMemo(() => {
@@ -292,7 +304,7 @@ export default function CustomersPage() {
                       )}
                     </div>
                     {roleInfo?.isOwner && (
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}>
+                      <Button variant="ghost" size="icon" onClick={() => promptDelete(customer.id, customer.name)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -382,10 +394,16 @@ export default function CustomersPage() {
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
-        title="Eliminar cliente"
-        description={`¿Eliminar a "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        onConfirm={() => { handleDelete(deleteTarget!.id); setDeleteTarget(null) }}
+        title={deleteTarget?.bookingCount ? "No se puede eliminar" : "Eliminar cliente"}
+        description={
+          deleteTarget?.bookingCount
+            ? `"${deleteTarget.name}" tiene ${deleteTarget.bookingCount} reserva(s) asociada(s). Elimínalas primero o cancélalas antes de borrar el cliente.`
+            : deleteTarget?.vehicleCount
+              ? `"${deleteTarget.name}" tiene ${deleteTarget.vehicleCount} vehículo(s) que también se eliminarán. ¿Continuar?`
+              : `¿Eliminar a "${deleteTarget?.name}"? Esta acción no se puede deshacer.`
+        }
+        confirmText={deleteTarget?.bookingCount ? "Cerrar" : "Eliminar"}
+        onConfirm={() => { if (!deleteTarget?.bookingCount) confirmDelete() }}
       />
 
       <Dialog open={vehicleDialogOpen} onOpenChange={(open) => { setVehicleDialogOpen(open); if (!open) resetVehicleForm() }}>
