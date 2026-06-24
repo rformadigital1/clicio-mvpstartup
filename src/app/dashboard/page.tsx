@@ -20,6 +20,8 @@ export default function DashboardPage() {
   const [prevMonthRevenue, setPrevMonthRevenue] = useState(0)
   const [monthBookings, setMonthBookings] = useState(0)
   const [totalCustomers, setTotalCustomers] = useState(0)
+  const [todayRevenue, setTodayRevenue] = useState(0)
+  const [todayPaid, setTodayPaid] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadData() }, [])
@@ -70,6 +72,22 @@ export default function DashboardPage() {
     bookings?.forEach((b) => { counts[b.status] = (counts[b.status] || 0) + 1 })
     setTodayCounts(counts)
     setTodayBookings(bookings ?? [])
+
+    let todayRevenue = 0
+    let todayPaid = 0
+    bookings?.forEach((b: any) => {
+      const svcs = b.booking_services
+      let total = 0
+      if (svcs?.length > 0) {
+        total = svcs.reduce((sum: number, bs: any) => sum + (bs.services?.price ?? 0), 0)
+      } else {
+        total = b.services?.price ?? 0
+      }
+      todayRevenue += total
+      if (b.status === "delivered") todayPaid += total
+    })
+    setTodayRevenue(todayRevenue)
+    setTodayPaid(todayPaid)
 
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const { data: monthData } = await supabase
@@ -175,18 +193,28 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="flex gap-3 mb-8">
-        <div className="flex-1 bg-bg-superficie border border-border-subtil rounded-lg p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
           <p className="text-xs text-muted-foreground font-medium mb-1">Reservas hoy</p>
           <p className="text-2xl font-bold text-azul-rey">{Object.values(todayCounts).reduce((a, b) => a + b, 0)}</p>
         </div>
-        <div className="flex-1 bg-bg-superficie border border-border-subtil rounded-lg p-4">
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
           <p className="text-xs text-muted-foreground font-medium mb-1">En progreso</p>
           <p className="text-2xl font-bold text-rojo">{todayCounts["in_progress"] || 0}</p>
         </div>
-        <div className="flex-1 bg-bg-superficie border border-border-subtil rounded-lg p-4">
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
           <p className="text-xs text-muted-foreground font-medium mb-1">Listos</p>
           <p className="text-2xl font-bold text-green-700">{todayCounts["ready"] || 0}</p>
+        </div>
+        <div className="bg-bg-superficie border border-border-subtil rounded-lg p-4">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Ingresos hoy</p>
+          <p className="text-2xl font-bold text-green-700">${todayRevenue.toLocaleString("es-CL")}</p>
+          <p className="text-xs mt-1">
+            <span className="text-green-700">✓ ${todayPaid.toLocaleString("es-CL")} cobrado</span>
+            <span className="text-muted-foreground"> · </span>
+            <span className="text-amber-600">⏳ ${(todayRevenue - todayPaid).toLocaleString("es-CL")} pendiente</span>
+          </p>
+          <a href="/dashboard/reports" className="text-xs text-azul-rey hover:underline mt-1 inline-block">Ver reporte →</a>
         </div>
       </div>
 
