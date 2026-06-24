@@ -102,7 +102,7 @@ export const TEMPLATES: Record<TemplateId, TemplateDefinition> = {
 }
 
 export function derivePalette(templateId: TemplateId, primaryColor: string): PageColors {
-  const template = TEMPLATES[templateId]
+  const template = TEMPLATES[templateId] ?? TEMPLATES.classic
   const base = template.basePalette
   return {
     ...base,
