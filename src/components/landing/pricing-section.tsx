@@ -77,7 +77,7 @@ export function PricingSection() {
           <div className="relative z-10 mt-8">
             <Button size="lg" className="w-full gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
               <Link href="/signup">
-                <span className="relative z-10">Pruébalo 7 días gratis</span>
+                <span className="relative z-10">Pruébalo 14 días gratis</span>
                 <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>

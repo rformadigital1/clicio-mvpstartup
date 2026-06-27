@@ -81,7 +81,7 @@ export function HeroSection() {
             <div className="flex flex-wrap gap-4">
               <Button size="lg" className="rounded-full gap-2 shadow-lg shadow-indigo-500/25" asChild>
                 <Link href="/signup">
-                  Pruébalo 7 días gratis
+                  Pruébalo 14 días gratis
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>

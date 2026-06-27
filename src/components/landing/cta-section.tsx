@@ -39,7 +39,7 @@ export function CTASection() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button size="lg" className="gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
                 <Link href="/signup">
-                  <span className="relative z-10">Pruébalo 7 días gratis</span>
+                  <span className="relative z-10">Pruébalo 14 días gratis</span>
                   <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>

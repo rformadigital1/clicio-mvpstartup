@@ -262,7 +262,7 @@ export function FeaturesSection() {
         >
           <Button size="lg" className="gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
             <Link href="/signup">
-              <span className="relative z-10">Pruébalo 7 días gratis</span>
+              <span className="relative z-10">Pruébalo 14 días gratis</span>
               <span className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>
           </Button>
