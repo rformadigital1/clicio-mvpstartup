@@ -49,7 +49,7 @@ const timeline = [
 export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/8 via-indigo-500/3 to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/8 via-indigo-500/3 to-transparent pointer-events-none" />
       <div className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full bg-indigo-500/5 blur-[150px] pointer-events-none" />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 lg:py-24">

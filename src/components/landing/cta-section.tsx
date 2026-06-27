@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react"
 export function CTASection() {
   return (
     <section className="relative py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/5 via-indigo-500/3 to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/5 via-indigo-500/3 to-transparent pointer-events-none" />
 
       <div className="container mx-auto relative z-10 max-w-2xl px-4 sm:px-6">
         <motion.div
