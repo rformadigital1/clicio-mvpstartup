@@ -11,7 +11,7 @@ const features = [
   "Agenda online 24/7",
   "CRM básico",
   "WhatsApp automatizado",
-  "Sistema de fidelización",
+  "Reportes de ingresos",
   "Soporte prioritario",
 ]
 

@@ -14,7 +14,7 @@ const testimonials = [
   {
     name: "Andrea L.",
     workshop: "Auto Servicio La Vega",
-    text: "La fidelización es un antes y después. Mis clientes vuelven por los sellos y yo tengo control total de mi agenda.",
+    text: "Ahora tengo todo en orden: clientes, vehículos y servicios registrados. Mi taller nunca había estado tan organizado.",
     color: "from-purple-500 to-pink-600",
     rating: 5,
   },

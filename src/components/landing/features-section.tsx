@@ -25,20 +25,20 @@ const features = [
     size: "sm",
   },
   {
-    title: "Notificaciones",
-    description: "Recordatorios por WhatsApp. Menos ausencias, más clientes.",
-    icon: Bell,
+    title: "CRM Taller",
+    description: "Registra tus clientes, vehículos y servicios. Todo organizado en un solo lugar.",
+    icon: Smartphone,
     gradient: "from-pink-500 to-rose-600",
-    items: ["WhatsApp automatizado", "Confirmaciones", "Alertas de ausencia"],
+    items: ["Registro de clientes", "Historial de vehículos", "Control de servicios"],
     colSpan: "md:col-span-1 lg:col-span-1",
     size: "sm",
   },
   {
-    title: "Panel Móvil",
-    description: "Gestiona tu taller desde el celular. Dashboard en tiempo real.",
-    icon: Smartphone,
+    title: "Reportes",
+    description: "Dashboard con ingresos, estadísticas y reportes de tu taller en tiempo real.",
+    icon: Bell,
     gradient: "from-indigo-500 to-pink-600",
-    items: ["Dashboard responsive", "CRM simple", "Reportes en tiempo real"],
+    items: ["Dashboard de ingresos", "Historial de pagos", "Estadísticas del taller"],
     colSpan: "md:col-span-1 lg:col-span-1",
     size: "sm",
   },
@@ -119,7 +119,7 @@ export function FeaturesSection() {
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Web + Agenda + Fidelización
+              Web + Agenda + CRM
             </span>
           </h2>
           <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto">
