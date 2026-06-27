@@ -21,10 +21,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params
   const { notes } = await req.json()
 
-  const { error } = await supabase
-    .from("tenants")
-    .update({ notes })
-    .eq("id", id)
+  const { error } = await supabase.rpc("admin_update_tenant", {
+    p_tenant_id: id,
+    p_status: null,
+    p_notes: notes,
+  })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

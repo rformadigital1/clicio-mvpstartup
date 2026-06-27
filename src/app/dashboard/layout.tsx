@@ -79,10 +79,17 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       setRoleInfo({ isOwner: profile.role === "owner", role: profile.role, email: profile.email })
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("logo_url, slug")
+        .select("logo_url, slug, status")
         .eq("id", profile.tenant_id)
         .single()
-      if (tenant) { setTenantLogo(tenant.logo_url); setTenantSlug(tenant.slug) }
+      if (tenant) {
+        setTenantLogo(tenant.logo_url)
+        setTenantSlug(tenant.slug)
+        if (tenant.status === "paused" || tenant.status === "cancelled") {
+          router.push("/dashboard/suspended")
+          return
+        }
+      }
     }
     setLoading(false)
   }
