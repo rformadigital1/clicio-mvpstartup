@@ -7,7 +7,7 @@ export default async function AdminboardLayout({ children }: { children: React.R
   const token = cookieStore.get("admin_token")?.value
 
   if (!token) {
-    redirect("/adminboard/login")
+    redirect("/controlroot/login")
   }
 
   const supabase = await createClient()
@@ -20,7 +20,7 @@ export default async function AdminboardLayout({ children }: { children: React.R
     .maybeSingle()
 
   if (!session) {
-    redirect("/adminboard/login")
+    redirect("/controlroot/login")
   }
 
   return <>{children}</>

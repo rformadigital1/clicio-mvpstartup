@@ -57,7 +57,7 @@ export default function AdminSettingsPage() {
     <div className="min-h-screen bg-muted/30 p-6">
       <div className="max-w-md mx-auto space-y-6">
         <button
-          onClick={() => router.push("/adminboard")}
+          onClick={() => router.push("/controlroot")}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Volver al panel

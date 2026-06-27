@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
         return
       }
 
-      router.push("/adminboard")
+      router.push("/controlroot")
     } catch {
       setError("Error de conexión")
     } finally {

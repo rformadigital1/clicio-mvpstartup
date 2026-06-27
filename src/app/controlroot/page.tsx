@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   async function loadTenants() {
     const res = await fetch("/api/admin/tenants")
     if (res.status === 401) {
-      router.push("/adminboard/login")
+      router.push("/controlroot/login")
       return
     }
     const data = await res.json()
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" })
-    router.push("/adminboard/login")
+    router.push("/controlroot/login")
   }
 
   if (loading) {
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
           <h1 className="text-lg font-bold">CLICIO Admin</h1>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push("/adminboard/settings")}
+              onClick={() => router.push("/controlroot/settings")}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Cambiar contraseña
