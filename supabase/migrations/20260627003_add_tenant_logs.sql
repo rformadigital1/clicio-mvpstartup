@@ -104,6 +104,7 @@ language plpgsql
 security definer
 as $$
 begin
+  delete from auth.users where id in (select id from profiles where tenant_id = p_tenant_id);
   delete from booking_services bs using bookings b where bs.booking_id = b.id and b.tenant_id = p_tenant_id;
   delete from stamp_history where tenant_id = p_tenant_id;
   delete from reward_notifications where tenant_id = p_tenant_id;
