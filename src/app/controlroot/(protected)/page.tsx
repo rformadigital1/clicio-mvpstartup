@@ -52,7 +52,8 @@ function getPlanLabel(t: Tenant): string {
 export default function AdminDashboard() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [dropdownTenant, setDropdownTenant] = useState<Tenant | null>(null)
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
   const [historyTenant, setHistoryTenant] = useState<Tenant | null>(null)
   const [historyLogs, setHistoryLogs] = useState<LogEntry[]>([])
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -75,7 +76,7 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     })
-    setOpenDropdown(null)
+    setDropdownTenant(null)
     await loadTenants()
   }
 
@@ -97,7 +98,7 @@ export default function AdminDashboard() {
   async function openHistory(t: Tenant) {
     setHistoryTenant(t)
     setHistoryOpen(true)
-    setOpenDropdown(null)
+    setDropdownTenant(null)
     const res = await fetch(`/api/admin/tenants/${t.id}/logs`)
     setHistoryLogs(await res.json())
   }
@@ -171,40 +172,17 @@ export default function AdminDashboard() {
                       placeholder="Nota..."
                     />
                   </td>
-                  <td className="px-4 py-3 relative">
-                    {t.status !== "cancelled" ? (
-                      <>
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === t.id ? null : t.id)}
-                          className="rounded border border-border px-3 py-1 text-xs font-medium hover:bg-muted transition-colors"
-                        >
-                          Acciones ▾
-                        </button>
-                        {openDropdown === t.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                            <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-lg border border-border bg-background shadow-lg py-1">
-                              {t.status === "trial" && (
-                                <button onClick={() => updateStatus(t.id, "active")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Activar plan pagado</button>
-                              )}
-                              {t.status === "paused" && (
-                                <button onClick={() => updateStatus(t.id, "active")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Activar plan pagado</button>
-                              )}
-                              {t.status !== "paused" && (
-                                <button onClick={() => updateStatus(t.id, "paused")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Pausar</button>
-                              )}
-                              <button onClick={() => updateStatus(t.id, "cancelled")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Cancelar</button>
-                              <hr className="my-1 border-border" />
-                              <button onClick={() => openHistory(t)} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Ver historial</button>
-                              <hr className="my-1 border-border" />
-                              <button onClick={() => { setDeleteTarget(t); setDeleteInput(""); setOpenDropdown(null) }} className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">Eliminar cuenta</button>
-                            </div>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <button onClick={() => openHistory(t)} className="rounded border border-border px-3 py-1 text-xs font-medium hover:bg-muted transition-colors">Historial</button>
-                    )}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={(e) => {
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                        setDropdownStyle({ top: rect.bottom + 4, left: Math.max(8, rect.right - 192) })
+                        setDropdownTenant(dropdownTenant?.id === t.id ? null : t)
+                      }}
+                      className="rounded border border-border px-3 py-1 text-xs font-medium hover:bg-muted transition-colors"
+                    >
+                      Acciones ▾
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -272,6 +250,25 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {dropdownTenant && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setDropdownTenant(null)} />
+          <div className="fixed z-50 w-48 rounded-lg border border-border bg-background shadow-lg py-1" style={dropdownStyle}>
+            {(dropdownTenant.status === "trial" || dropdownTenant.status === "paused") && (
+              <button onClick={() => updateStatus(dropdownTenant.id, "active")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Activar plan pagado</button>
+            )}
+            {dropdownTenant.status !== "paused" && (
+              <button onClick={() => updateStatus(dropdownTenant.id, "paused")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Pausar</button>
+            )}
+            <button onClick={() => updateStatus(dropdownTenant.id, "cancelled")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Cancelar</button>
+            <hr className="my-1 border-border" />
+            <button onClick={() => openHistory(dropdownTenant)} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Ver historial</button>
+            <hr className="my-1 border-border" />
+            <button onClick={() => { setDeleteTarget(dropdownTenant); setDeleteInput(""); setDropdownTenant(null) }} className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">Eliminar cuenta</button>
+          </div>
+        </>
       )}
     </div>
   )
