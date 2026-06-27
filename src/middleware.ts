@@ -30,14 +30,17 @@ export async function middleware(request: NextRequest) {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("status")
+          .select("status, trial_ends_at")
           .eq("id", profile.tenant_id)
           .single()
 
-        if (tenant && (tenant.status === "paused" || tenant.status === "cancelled")) {
-          const redirectUrl = request.nextUrl.clone()
-          redirectUrl.pathname = "/dashboard/suspended"
-          return NextResponse.redirect(redirectUrl)
+        if (tenant) {
+          const isExpired = tenant.status === "trial" && tenant.trial_ends_at && new Date(tenant.trial_ends_at) < new Date()
+          if (tenant.status === "paused" || tenant.status === "cancelled" || isExpired) {
+            const redirectUrl = request.nextUrl.clone()
+            redirectUrl.pathname = "/dashboard/suspended"
+            return NextResponse.redirect(redirectUrl)
+          }
         }
       }
     }

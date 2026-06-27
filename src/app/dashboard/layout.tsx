@@ -79,13 +79,22 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
       setRoleInfo({ isOwner: profile.role === "owner", role: profile.role, email: profile.email })
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("logo_url, slug, status")
+        .select("logo_url, slug, status, trial_ends_at")
         .eq("id", profile.tenant_id)
         .single()
       if (tenant) {
         setTenantLogo(tenant.logo_url)
         setTenantSlug(tenant.slug)
         if (tenant.status === "paused" || tenant.status === "cancelled") {
+          router.push("/dashboard/suspended")
+          return
+        }
+        if (tenant.status === "trial" && tenant.trial_ends_at && new Date(tenant.trial_ends_at) < new Date()) {
+          await supabase.rpc("admin_update_tenant", {
+            p_tenant_id: profile.tenant_id,
+            p_status: "paused",
+            p_notes: null,
+          })
           router.push("/dashboard/suspended")
           return
         }
