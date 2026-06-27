@@ -97,3 +97,31 @@ end;
 $$;
 
 grant execute on function admin_list_tenants to anon, public;
+
+create or replace function admin_delete_tenant(p_tenant_id uuid)
+returns boolean
+language plpgsql
+security definer
+as $$
+begin
+  delete from booking_services bs using bookings b where bs.booking_id = b.id and b.tenant_id = p_tenant_id;
+  delete from bookings where tenant_id = p_tenant_id;
+  delete from stamp_history where tenant_id = p_tenant_id;
+  delete from reward_notifications where tenant_id = p_tenant_id;
+  delete from vehicles where tenant_id = p_tenant_id;
+  delete from customers where tenant_id = p_tenant_id;
+  delete from services where tenant_id = p_tenant_id;
+  delete from loyalty_rules where tenant_id = p_tenant_id;
+  delete from business_hours where tenant_id = p_tenant_id;
+  delete from blocked_dates where tenant_id = p_tenant_id;
+  delete from profiles where tenant_id = p_tenant_id;
+  delete from staff_invitations where tenant_id = p_tenant_id;
+  delete from gallery_images where tenant_id = p_tenant_id;
+  delete from trial_notifications where tenant_id = p_tenant_id;
+  delete from tenant_logs where tenant_id = p_tenant_id;
+  delete from tenants where id = p_tenant_id;
+  return found;
+end;
+$$;
+
+grant execute on function admin_delete_tenant to anon, public;

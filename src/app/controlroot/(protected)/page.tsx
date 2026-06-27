@@ -56,6 +56,8 @@ export default function AdminDashboard() {
   const [historyTenant, setHistoryTenant] = useState<Tenant | null>(null)
   const [historyLogs, setHistoryLogs] = useState<LogEntry[]>([])
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null)
+  const [deleteInput, setDeleteInput] = useState("")
   const router = useRouter()
 
   async function loadTenants() {
@@ -83,6 +85,13 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ notes }),
     })
+  }
+
+  async function handleDelete(id: string) {
+    await fetch(`/api/admin/tenants/${id}`, { method: "DELETE" })
+    setDeleteTarget(null)
+    setDeleteInput("")
+    await loadTenants()
   }
 
   async function openHistory(t: Tenant) {
@@ -187,6 +196,8 @@ export default function AdminDashboard() {
                               <button onClick={() => updateStatus(t.id, "cancelled")} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Cancelar</button>
                               <hr className="my-1 border-border" />
                               <button onClick={() => openHistory(t)} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">Ver historial</button>
+                              <hr className="my-1 border-border" />
+                              <button onClick={() => { setDeleteTarget(t); setDeleteInput(""); setOpenDropdown(null) }} className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">Eliminar cuenta</button>
                             </div>
                           </>
                         )}
@@ -224,6 +235,40 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setDeleteTarget(null); setDeleteInput("") }}>
+          <div className="bg-background rounded-xl shadow-2xl border border-border max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <h2 className="font-semibold">Eliminar cuenta</h2>
+              <button onClick={() => { setDeleteTarget(null); setDeleteInput("") }} className="text-muted-foreground hover:text-foreground text-lg leading-none">&times;</button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Esta acción eliminará permanentemente la cuenta <strong>{deleteTarget.name}</strong> y todos sus datos (clientes, reservas, servicios, configuraciones, etc.). No se puede deshacer.
+              </p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Escribe <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">{deleteTarget.name}</code> para confirmar:
+                </label>
+                <input
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder={deleteTarget.name}
+                />
+              </div>
+              <button
+                onClick={() => handleDelete(deleteTarget.id)}
+                disabled={deleteInput !== deleteTarget.name}
+                className="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Eliminar esta cuenta
+              </button>
             </div>
           </div>
         </div>
