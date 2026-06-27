@@ -89,7 +89,8 @@ export default function AdminDashboard() {
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/admin/tenants/${id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/tenants/${id}`, { method: "DELETE" })
+    if (!res.ok) { alert("Error al eliminar: " + (await res.text())); return }
     setDeleteTarget(null)
     setDeleteInput("")
     await loadTenants()

@@ -105,9 +105,9 @@ security definer
 as $$
 begin
   delete from booking_services bs using bookings b where bs.booking_id = b.id and b.tenant_id = p_tenant_id;
-  delete from bookings where tenant_id = p_tenant_id;
   delete from stamp_history where tenant_id = p_tenant_id;
   delete from reward_notifications where tenant_id = p_tenant_id;
+  delete from bookings where tenant_id = p_tenant_id;
   delete from vehicles where tenant_id = p_tenant_id;
   delete from customers where tenant_id = p_tenant_id;
   delete from services where tenant_id = p_tenant_id;
