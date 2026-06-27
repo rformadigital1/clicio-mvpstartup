@@ -14,6 +14,7 @@ import {
 import { ToastProvider } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Calendar, Users, Car, Settings, LayoutDashboard, LogOut, Menu, BarChart3, ExternalLink, DollarSign, ChevronDown, Info, Clock, Image, UsersRound, Palette } from "lucide-react"
+import { TrialBanner } from "@/components/dashboard/trial-banner"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useState, useEffect, createContext, useContext } from "react"
 
@@ -263,7 +264,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
               </div>
             )}
           </aside>
-          <main className="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden">{children}</main>
+          <main className="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden"><TrialBanner />{children}</main>
         </div>
       </div>
     </RoleContext.Provider>
