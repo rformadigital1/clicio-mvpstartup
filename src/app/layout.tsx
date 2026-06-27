@@ -3,7 +3,7 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Clicio App — Agenda y gestión de talleres automotrices",
-  description: "Agenda digital, perfil público y fidelización para tu taller mecánico.",
+  description: "Agenda digital y perfil público para tu taller mecánico.",
   icons: [{ url: "/favicon.svg", type: "image/svg+xml" }],
 }
 
