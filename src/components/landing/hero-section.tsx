@@ -2,9 +2,7 @@
 
 import { motion } from "framer-motion"
 import { ChevronRight, Clock, TrendingUp, Calendar } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
+
 
 const timeline = [
   {
@@ -49,7 +47,6 @@ const timeline = [
 ]
 
 export function HeroSection() {
-  const router = useRouter()
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/8 via-indigo-500/3 to-transparent" />
@@ -81,13 +78,13 @@ export function HeroSection() {
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="rounded-full gap-2 shadow-lg shadow-indigo-500/25" onClick={() => router.push("/signup")}>
+              <a href="/signup" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium h-10 px-8 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-colors cursor-pointer">
                 Pruébalo 14 días gratis
                 <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="lg" className="rounded-full" asChild>
-                <Link href="#solucion">Ver cómo funciona</Link>
-              </Button>
+              </a>
+              <a href="#solucion" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium h-10 px-8 border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                Ver cómo funciona
+              </a>
             </div>
 
             <p className="text-sm text-muted-foreground">

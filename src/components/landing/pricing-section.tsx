@@ -2,8 +2,6 @@
 
 import { motion } from "framer-motion"
 import { Check, ArrowRight } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 
 const features = [
   "Página web profesional con tu taller",
@@ -15,7 +13,6 @@ const features = [
 ]
 
 export function PricingSection() {
-  const router = useRouter()
   return (
     <section id="precio" className="relative py-28 overflow-hidden">
       <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-indigo-500/5 blur-[150px] pointer-events-none" />
@@ -76,10 +73,10 @@ export function PricingSection() {
           </div>
 
           <div className="relative z-10 mt-8">
-            <Button size="lg" className="w-full gap-2 shadow-lg shadow-indigo-500/20" onClick={() => router.push("/signup")}>
+            <a href="/signup" className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium h-10 px-8 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-colors cursor-pointer rounded-lg w-full">
               Pruébalo 14 días gratis
               <ArrowRight className="h-4 w-4" />
-            </Button>
+            </a>
             <p className="text-xs text-muted-foreground text-center mt-3">
               Sin tarjeta de crédito. Sin compromiso.
             </p>

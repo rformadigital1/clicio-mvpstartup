@@ -2,12 +2,8 @@
 
 import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 
 export function CTASection() {
-  const router = useRouter()
   return (
     <section className="relative py-32 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/5 via-indigo-500/3 to-transparent" />
@@ -39,13 +35,13 @@ export function CTASection() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" className="gap-2 shadow-lg shadow-indigo-500/20" onClick={() => router.push("/signup")}>
+              <a href="/signup" className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium h-10 px-8 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-colors cursor-pointer rounded-lg">
                 Pruébalo 14 días gratis
                 <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="lg" className="border-border/50 backdrop-blur-sm" asChild>
-                <Link href="#solucion">Ver cómo funciona</Link>
-              </Button>
+              </a>
+              <a href="#solucion" className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium h-10 px-8 border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer rounded-lg">
+                Ver cómo funciona
+              </a>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Sin tarjeta. Sin compromiso. Cancela cuando quieras.
