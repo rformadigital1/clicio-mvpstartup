@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { cookies } from "next/headers"
 
 export async function GET() {
-  const supabase = await createClient()
+  const cookieStore = await cookies()
+  const token = cookieStore.get("admin_token")?.value
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { data: sessions } = await supabase
+  const supabase = createAdminClient()
+
+  const { data: session } = await supabase
     .from("admin_sessions")
-    .select("id, expires_at")
+    .select("id")
+    .eq("token", token)
     .gte("expires_at", new Date().toISOString())
-    .limit(1)
+    .maybeSingle()
 
-  if (!sessions || sessions.length === 0) {
-    return NextResponse.json({ authenticated: false }, { status: 401 })
-  }
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  return NextResponse.json({ authenticated: true })
+  return NextResponse.json({ ok: true })
 }

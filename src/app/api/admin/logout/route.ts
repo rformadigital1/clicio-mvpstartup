@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function POST() {
   const response = NextResponse.json({ ok: true })
@@ -6,7 +7,7 @@ export async function POST() {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/controlroot",
+    path: "/",
     maxAge: 0,
   })
   return response

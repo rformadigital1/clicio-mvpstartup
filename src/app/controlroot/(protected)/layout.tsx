@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { cookies } from "next/headers"
 
 export default async function AdminboardLayout({ children }: { children: React.ReactNode }) {
@@ -10,7 +10,7 @@ export default async function AdminboardLayout({ children }: { children: React.R
     redirect("/controlroot/login")
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: session } = await supabase
     .from("admin_sessions")

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { cookies } from "next/headers"
 
 export async function PUT(req: Request) {
@@ -17,7 +17,7 @@ export async function PUT(req: Request) {
   const token = cookieStore.get("admin_token")?.value
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: sessions } = await supabase
     .from("admin_sessions")

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function POST(req: Request) {
   const { username, password } = await req.json()
@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: valid } = await supabase.rpc("verify_admin_password", {
     p_username: username,
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/controlroot",
+    path: "/",
     maxAge: 60 * 60 * 24,
   })
 
