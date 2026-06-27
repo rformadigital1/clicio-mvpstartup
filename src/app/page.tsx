@@ -11,8 +11,8 @@ export default function LandingPage() {
     <div className="min-h-screen overflow-hidden">
       <header className="fixed top-0 z-50 w-full border-b border-border/20 bg-background/90 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <img src="/logo-small.webp" alt="CLICIO" className="h-9 w-auto object-contain" />
+          <Link href="/" className="flex items-center group">
+            <img src="/logo-small.webp" alt="CLICIO" className="h-11 w-auto object-contain" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#solucion" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -47,7 +47,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-col items-center gap-4">
             <Link href="/" className="flex items-center group">
-              <img src="/logo-small.webp" alt="CLICIO" className="h-8 w-auto object-contain" />
+              <img src="/logo-small.webp" alt="CLICIO" className="h-10 w-auto object-contain" />
             </Link>
             <p className="text-sm text-muted-foreground">
               &copy; {new Date().getFullYear()} CLICIO. Todos los derechos reservados.
