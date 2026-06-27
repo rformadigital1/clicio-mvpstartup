@@ -190,9 +190,7 @@ export function HeroSection() {
                 </div>
                 <div className="p-3 space-y-2.5">
                   <div className="flex items-center gap-2 pb-2 border-b border-border/10">
-                    <div className="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-[8px]">C</span>
-                    </div>
+                    <img src="/logo-small.webp" alt="CLICIO" className="w-6 h-6 object-contain" />
                     <span className="text-xs font-semibold text-foreground">CLICIO</span>
                   </div>
                   <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-lg p-2 border border-indigo-100 dark:border-indigo-900/30">
