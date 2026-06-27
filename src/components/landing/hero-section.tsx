@@ -1,180 +1,216 @@
 "use client"
 
-import { motion, type Variants } from "framer-motion"
-import { Calendar, Users, Clock, Star, ChevronRight, Sparkles } from "lucide-react"
+import { motion } from "framer-motion"
+import { ChevronRight, Clock, TrendingUp, Calendar } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+const timeline = [
+  {
+    time: "10:00",
+    initials: "MC",
+    name: "María C.",
+    plate: "ABC123",
+    service: "Cambio de aceite",
+    status: "Reservado",
+    borderColor: "border-l-indigo-500",
+    bgColor: "bg-indigo-100 dark:bg-indigo-900/40",
+    textColor: "text-indigo-700 dark:text-indigo-300",
+    badgeBg: "bg-indigo-100 dark:bg-indigo-900/40",
+    badgeText: "text-indigo-700 dark:text-indigo-300",
   },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, filter: "blur(12px)", y: 16 },
-  visible: {
-    opacity: 1,
-    filter: "blur(0px)",
-    y: 0,
-    transition: { type: "spring", bounce: 0.3, duration: 1.5 } as const,
+  {
+    time: "11:30",
+    initials: "JR",
+    name: "Juan R.",
+    plate: "DEF456",
+    service: "Alineación y balanceo",
+    status: "En taller",
+    borderColor: "border-l-amber-500",
+    bgColor: "bg-amber-100 dark:bg-amber-900/40",
+    textColor: "text-amber-700 dark:text-amber-300",
+    badgeBg: "bg-amber-100 dark:bg-amber-900/40",
+    badgeText: "text-amber-700 dark:text-amber-300",
   },
-} satisfies Variants
-
-function StatCard({ icon, value, label, gradient }: { icon: React.ReactNode; value: string; label: string; gradient: string }) {
-  return (
-    <div className="rounded-2xl border border-border/30 bg-background/40 backdrop-blur-sm p-5 text-center">
-      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mx-auto mb-3 shadow-lg`}>
-        {icon}
-      </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-      <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
-    </div>
-  )
-}
-
-function PhoneMockup() {
-  return (
-    <div className="relative mx-auto w-[280px] sm:w-[310px]">
-      <div className="relative rounded-[2.5rem] border-[8px] border-gray-800 bg-gray-800 shadow-2xl">
-        <div className="absolute left-1/2 top-0 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-gray-800" />
-        <div className="overflow-hidden rounded-[2rem] bg-white">
-          <div className="h-[560px] sm:h-[600px] overflow-y-auto">
-            <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 text-white">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="text-base font-bold">CLICIO</div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-medium">
-                    TA
-                  </div>
-                </div>
-              </div>
-              <h2 className="text-lg font-bold mb-0.5">Panel Taller</h2>
-              <p className="text-[11px] text-white/80">Gestiona tus citas y servicios</p>
-            </div>
-            <div className="p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-indigo-50 to-indigo-100 p-3">
-                  <Calendar className="h-4 w-4 text-indigo-600 mb-1.5" />
-                  <div className="text-xl font-bold text-indigo-900">24</div>
-                  <div className="text-[10px] text-indigo-600">Citas Hoy</div>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-purple-50 to-purple-100 p-3">
-                  <Users className="h-4 w-4 text-purple-600 mb-1.5" />
-                  <div className="text-xl font-bold text-purple-900">156</div>
-                  <div className="text-[10px] text-purple-600">Clientes</div>
-                </div>
-              </div>
-              <div className="pt-1">
-                <div className="flex items-center justify-between mb-2.5">
-                  <h3 className="text-xs font-semibold text-gray-900">Próximas Citas</h3>
-                  <button className="text-[10px] text-indigo-600 font-medium">Ver todas</button>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    { initials: "MC", name: "María C.", service: "Cambio de aceite", time: "10:00", bg: "bg-indigo-100", text: "text-indigo-700" },
-                    { initials: "JR", name: "Juan R.", service: "Alineación", time: "11:30", bg: "bg-purple-100", text: "text-purple-700" },
-                    { initials: "AS", name: "Ana S.", service: "Frenos", time: "14:00", bg: "bg-pink-100", text: "text-pink-700" },
-                  ].map((item, i) => (
-                    <div key={i} className="rounded-lg border border-gray-100 bg-white p-2.5 shadow-sm">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <div className={`h-7 w-7 rounded-full ${item.bg} flex items-center justify-center text-[10px] font-semibold ${item.text}`}>
-                            {item.initials}
-                          </div>
-                          <div>
-                            <div className="text-[11px] font-semibold text-gray-900">{item.name}</div>
-                            <div className="text-[9px] text-gray-500">{item.service}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[11px] font-semibold text-gray-900">{item.time}</div>
-                          <div className="text-[9px] text-gray-500">45 min</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+  {
+    time: "14:00",
+    initials: "AS",
+    name: "Ana S.",
+    plate: "GHI789",
+    service: "Pastillas de freno",
+    status: "Listo",
+    borderColor: "border-l-emerald-500",
+    bgColor: "bg-emerald-100 dark:bg-emerald-900/40",
+    textColor: "text-emerald-700 dark:text-emerald-300",
+    badgeBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    badgeText: "text-emerald-700 dark:text-emerald-300",
+  },
+]
 
 export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/10 via-purple-500/5 to-transparent" />
-      <div className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full bg-indigo-500/8 blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-20 -right-20 w-[500px] h-[500px] rounded-full bg-pink-500/8 blur-[150px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/8 via-indigo-500/3 to-transparent" />
+      <div className="absolute top-20 -left-20 w-[500px] h-[500px] rounded-full bg-indigo-500/5 blur-[150px] pointer-events-none" />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 lg:py-24">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+        <div className="flex flex-col-reverse lg:flex-row gap-16 lg:gap-20 items-center">
           <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+            className="flex-1 space-y-8 max-w-xl"
           >
-            <motion.div variants={itemVariants} className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/30 bg-background/50 px-4 py-1.5 text-sm backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
-                </span>
-                <span className="text-muted-foreground">Disponible ahora</span>
-              </div>
-
-              <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl lg:text-7xl tracking-tight">
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Reservas Online
+            <div className="space-y-6">
+              <h1 className="text-4xl font-bold sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[1.1]">
+                <span className="text-foreground">
+                  Se terminaron las
                 </span>
                 <br />
-                <span className="text-foreground">Para Tu Taller</span>
+                <span className="text-indigo-600 dark:text-indigo-400">
+                  llamadas perdidas
+                </span>
               </h1>
 
-              <p className="max-w-xl text-lg text-muted-foreground leading-relaxed">
-                Olvídate de las llamadas perdidas y las agendas desordenadas.
-                Tus clientes reservan desde tu web, tú recibes confirmaciones automáticas.
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
+                Tus clientes reservan solos desde el celular. Te llega la confirmación mientras trabajas tranquilo.
+                Sin contestar WhatsApp a las 11 de la noche.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
-              <Button size="lg" className="gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
+            <div className="flex flex-wrap gap-4">
+              <Button size="lg" className="rounded-full gap-2 shadow-lg shadow-indigo-500/25" asChild>
                 <Link href="/signup">
-                  <span className="relative z-10">Comenzar Gratis</span>
-                  <ChevronRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-1" />
+                  Pruébalo 7 días gratis
+                  <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="border-border/40 backdrop-blur-sm" asChild>
-                <Link href="#solucion">Ver Solución</Link>
+              <Button variant="outline" size="lg" className="rounded-full" asChild>
+                <Link href="#solucion">Ver cómo funciona</Link>
               </Button>
-            </motion.div>
+            </div>
 
-            <motion.div variants={itemVariants} className="grid grid-cols-3 gap-3 pt-4">
-              <StatCard icon={<Calendar className="h-5 w-5 text-white" />} value="50K+" label="Citas gestionadas" gradient="from-indigo-500 to-purple-600" />
-              <StatCard icon={<Users className="h-5 w-5 text-white" />} value="500+" label="Talleres activos" gradient="from-purple-500 to-pink-600" />
-              <StatCard icon={<Star className="h-5 w-5 text-white" />} value="4.9" label="Satisfacción" gradient="from-pink-500 to-rose-600" />
-            </motion.div>
+            <p className="text-sm text-muted-foreground">
+              Sin tarjeta de crédito. Sin compromiso. Cancela cuando quieras.
+            </p>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, duration: 0.8, type: "spring", bounce: 0.2 }}
-            className="relative"
+            transition={{ delay: 0.3, duration: 0.8, type: "spring", bounce: 0.2 }}
+            className="relative flex-1 max-w-lg w-full"
           >
             <div className="relative">
-              <div className="absolute -inset-6 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20 blur-3xl" />
-              <div className="relative">
-                <PhoneMockup />
+              <div className="absolute -top-3 -left-3 w-full h-full rounded-xl bg-gradient-to-br from-indigo-400/40 to-indigo-500/30 -z-10 rotate-6" />
+              <div className="absolute -top-6 -left-6 w-full h-full rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 -z-20 rotate-12" />
+
+              <div className="relative bg-background rounded-xl shadow-2xl border border-border/30 overflow-hidden rotate-2 hover:rotate-0 transition-transform duration-500">
+                <div className="bg-card border-b border-border/20 px-4 py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-mono">CLICIO · Panel del Taller</span>
+                  <div className="w-3 h-3 rounded-full bg-indigo-600" />
+                </div>
+
+                <div className="p-5 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Hola, Taller Muñoz</h3>
+                    <p className="text-[11px] text-muted-foreground">viernes, 27 de junio de 2026 — Resumen del día</p>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-lg p-2.5 border border-indigo-100 dark:border-indigo-900/30">
+                      <div className="text-[9px] text-muted-foreground font-medium mb-0.5">Reservas hoy</div>
+                      <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">8</div>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2.5 border border-amber-100 dark:border-amber-900/30">
+                      <div className="text-[9px] text-muted-foreground font-medium mb-0.5">En taller</div>
+                      <div className="text-lg font-bold text-amber-600 dark:text-amber-400">3</div>
+                    </div>
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-2.5 border border-emerald-100 dark:border-emerald-900/30">
+                      <div className="text-[9px] text-muted-foreground font-medium mb-0.5">Listos</div>
+                      <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">2</div>
+                    </div>
+                    <div className="bg-sky-50 dark:bg-sky-950/30 rounded-lg p-2.5 border border-sky-100 dark:border-sky-900/30">
+                      <div className="text-[9px] text-muted-foreground font-medium mb-0.5">Hoy</div>
+                      <div className="text-lg font-bold text-sky-600 dark:text-sky-400">$286K</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-indigo-600" />
+                      <span className="text-[10px] font-semibold text-foreground">Timeline del día</span>
+                    </div>
+
+                    {timeline.map((item) => (
+                      <div key={item.time} className="flex items-start gap-2">
+                        <div className="w-10 text-right shrink-0 pt-1.5">
+                          <span className="text-[10px] font-medium text-muted-foreground">{item.time}</span>
+                        </div>
+                        <div className={`flex-1 bg-card border border-border/20 rounded-lg p-2.5 border-l-[3px] ${item.borderColor} flex items-start gap-2`}>
+                          <div className={`w-7 h-7 rounded-full ${item.bgColor} flex items-center justify-center text-[9px] font-bold ${item.textColor} shrink-0`}>
+                            {item.initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-1">
+                              <span className="text-[11px] font-semibold text-foreground truncate">{item.name}</span>
+                              <span className={`text-[8px] ${item.badgeBg} ${item.badgeText} px-1.5 py-0.5 rounded-full font-medium shrink-0`}>
+                                {item.status}
+                              </span>
+                            </div>
+                            <div className="text-[9px] text-muted-foreground">{item.plate} · {item.service}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-2 border-t border-border/10">
+                    <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                      <TrendingUp className="h-3 w-3 text-emerald-500" />
+                      +23% vs mes pasado
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                      <Calendar className="h-3 w-3 text-indigo-500" />
+                      42 reservas este mes
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -bottom-6 -right-6 w-40 bg-background rounded-[2rem] shadow-2xl border border-border/30 overflow-hidden -rotate-6 hover:rotate-0 transition-transform duration-500">
+                <div className="bg-muted/30 px-4 py-2 flex justify-between items-center text-xs border-b border-border/20">
+                  <span className="font-semibold text-foreground">9:41</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-1.5 bg-green-500 rounded-sm" />
+                    <span className="text-[9px] text-muted-foreground">100%</span>
+                  </div>
+                </div>
+                <div className="p-3 space-y-2.5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/10">
+                    <div className="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-[8px]">C</span>
+                    </div>
+                    <span className="text-xs font-semibold text-foreground">CLICIO</span>
+                  </div>
+                  <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-lg p-2 border border-indigo-100 dark:border-indigo-900/30">
+                    <p className="text-[9px] font-medium text-indigo-700 dark:text-indigo-300">Nueva reserva</p>
+                    <p className="text-[8px] text-muted-foreground">María C. · 10:00</p>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 border border-amber-100 dark:border-amber-900/30">
+                    <p className="text-[9px] font-medium text-amber-700 dark:text-amber-300">Cliente llegó</p>
+                    <p className="text-[8px] text-muted-foreground">Juan R. · Alineación</p>
+                  </div>
+                  <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-2 border border-emerald-100 dark:border-emerald-900/30">
+                    <p className="text-[9px] font-medium text-emerald-700 dark:text-emerald-300">Vehículo listo</p>
+                    <p className="text-[8px] text-muted-foreground">Ana S. · Pastillas</p>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

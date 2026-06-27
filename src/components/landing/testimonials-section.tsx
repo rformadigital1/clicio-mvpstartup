@@ -1,29 +1,35 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Star, Quote, Sparkles } from "lucide-react"
+import { Star, Quote, BadgeCheck } from "lucide-react"
 
 const testimonials = [
   {
-    name: "Carlos M.",
-    workshop: "Taller Mecánico Pérez",
-    text: "Desde que uso CLICIO, las reservas llegaron solas. Ya no pierdo llamadas perdidas y mis clientes agendan直接 desde la web.",
-    color: "from-indigo-500 to-purple-600",
+    name: "Ricardo Muñoz",
+    workshop: "Taller Mecánico Muñoz, Rancagua",
+    text: "Perdía llamadas todos los días porque estaba metido en los autos. Desde que tengo CLICIO, los clientes agendan solos y yo solo trabajo. En dos meses recuperé clientes que había perdido.",
+    avatar: "RM",
+    color: "bg-indigo-600",
     rating: 5,
+    result: "Recuperé 15 clientes en 2 meses",
   },
   {
-    name: "Andrea L.",
-    workshop: "Auto Servicio La Vega",
-    text: "Ahora tengo todo en orden: clientes, vehículos y servicios registrados. Mi taller nunca había estado tan organizado.",
-    color: "from-purple-500 to-pink-600",
+    name: "Ana Soto",
+    workshop: "Auto Servicios La Vega, Santiago",
+    text: "Tenía WhatsApp personal y del taller todo mezclado. Llegaban mensajes a las 11 de la noche. Ahora los clientes reservan desde la página y yo tengo mi WhatsApp tranquilo. Nunca había estado tan ordenada.",
+    avatar: "AS",
+    color: "bg-emerald-600",
     rating: 5,
+    result: "WhatsApp del taller separado del personal",
   },
   {
-    name: "Pedro G.",
-    workshop: "Gomería Express",
-    text: "En 15 minutos tenía mi página lista. Mis clientes agendan solos y ya no pierdo tiempo contestando WhatsApp.",
-    color: "from-pink-500 to-rose-600",
+    name: "Pedro Gutiérrez",
+    workshop: "Gomería Express, Maipú",
+    text: "Pensé que esto de la página web era caro y complicado. En 15 minutos tenía todo listo. Al día siguiente ya había agendado un cliente que me encontró por Google. Facturé $80.000 esa semana solo por eso.",
+    avatar: "PG",
+    color: "bg-amber-600",
     rating: 5,
+    result: "$80.000 extra la primera semana",
   },
 ]
 
@@ -48,9 +54,7 @@ const cardVariants = {
 export function TestimonialsSection() {
   return (
     <section className="relative py-28 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-purple-500/5 via-pink-500/5 to-transparent" />
-      <div className="absolute top-40 left-1/3 w-72 h-72 rounded-full bg-purple-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-40 right-1/3 w-72 h-72 rounded-full bg-pink-500/10 blur-[120px] pointer-events-none" />
+      <div className="absolute top-40 left-1/3 w-72 h-72 rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto relative z-10 max-w-5xl px-4 sm:px-6">
         <motion.div
@@ -60,17 +64,12 @@ export function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-background/50 px-4 py-1.5 text-sm backdrop-blur-sm mb-5">
-            <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-            <span className="text-muted-foreground">Testimonios</span>
-          </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Lo que dicen los talleres
-            </span>
+            <span className="text-foreground">Talleres como el tuyo</span>{" "}
+            <span className="text-indigo-600 dark:text-indigo-400">ya usan CLICIO</span>
           </h2>
           <p className="mt-4 text-muted-foreground text-lg max-w-xl mx-auto">
-            Más de 50 talleres confían en CLICIO para digitalizar su negocio.
+            Dueños de taller que dejaron de perder clientes y recuperaron el control de su negocio.
           </p>
         </motion.div>
 
@@ -85,12 +84,10 @@ export function TestimonialsSection() {
             <motion.div
               key={t.name}
               variants={cardVariants}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="group relative rounded-2xl border border-border/40 bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-xl p-7"
+              whileHover={{ y: -4 }}
+              className="group relative rounded-2xl border border-border/30 bg-card/80 p-7"
             >
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/[0.03] via-purple-500/[0.03] to-pink-500/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-              <Quote className="h-8 w-8 text-indigo-500/20 mb-3" />
+              <Quote className="h-8 w-8 text-muted-foreground/15 mb-3" />
 
               <div className="flex items-center gap-1 mb-4">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -105,16 +102,19 @@ export function TestimonialsSection() {
                 &ldquo;{t.text}&rdquo;
               </p>
 
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${t.color} rounded-full blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
-                  <div className={`relative w-10 h-10 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-sm font-bold text-white shadow-lg`}>
-                    {t.name.charAt(0)}
+              <div className="border-t border-border/10 pt-4 mt-auto">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full ${t.color} flex items-center justify-center text-sm font-bold text-white shadow-sm`}>
+                    {t.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{t.workshop}</p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.workshop}</p>
+                <div className="flex items-center gap-1.5 mt-3 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                  {t.result}
                 </div>
               </div>
             </motion.div>
