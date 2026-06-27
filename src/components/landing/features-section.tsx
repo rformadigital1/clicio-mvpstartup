@@ -1,8 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Globe, Calendar, Users, BarChart3, CheckCircle, Clock, ChevronRight } from "lucide-react"
-import Link from "next/link"
+import { Globe, Calendar, Users, BarChart3, CheckCircle, Clock, ChevronRight, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 const features = [
@@ -219,6 +219,7 @@ function WrenchIcon({ className }: { className?: string }) {
 }
 
 export function FeaturesSection() {
+  const router = useRouter()
   return (
     <section id="solucion" className="relative py-28 overflow-hidden">
       <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
@@ -260,11 +261,9 @@ export function FeaturesSection() {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-center mt-12"
         >
-          <Button size="lg" className="gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
-            <Link href="/signup">
-              <span className="relative z-10">Pruébalo 14 días gratis</span>
-              <span className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
+          <Button size="lg" className="gap-2 group shadow-lg shadow-indigo-500/20" onClick={() => router.push("/signup")}>
+            Pruébalo 14 días gratis
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </motion.div>
       </div>

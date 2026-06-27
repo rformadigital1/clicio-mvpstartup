@@ -3,9 +3,11 @@
 import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 export function CTASection() {
+  const router = useRouter()
   return (
     <section className="relative py-32 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/5 via-indigo-500/3 to-transparent" />
@@ -37,11 +39,9 @@ export function CTASection() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" className="gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
-                <Link href="/signup">
-                  <span className="relative z-10">Pruébalo 14 días gratis</span>
-                  <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-1" />
-                </Link>
+              <Button size="lg" className="gap-2 shadow-lg shadow-indigo-500/20" onClick={() => router.push("/signup")}>
+                Pruébalo 14 días gratis
+                <ArrowRight className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg" className="border-border/50 backdrop-blur-sm" asChild>
                 <Link href="#solucion">Ver cómo funciona</Link>

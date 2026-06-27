@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Check, ArrowRight } from "lucide-react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 const features = [
@@ -15,6 +15,7 @@ const features = [
 ]
 
 export function PricingSection() {
+  const router = useRouter()
   return (
     <section id="precio" className="relative py-28 overflow-hidden">
       <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-indigo-500/5 blur-[150px] pointer-events-none" />
@@ -75,11 +76,9 @@ export function PricingSection() {
           </div>
 
           <div className="relative z-10 mt-8">
-            <Button size="lg" className="w-full gap-2 group relative overflow-hidden shadow-lg shadow-indigo-500/20" asChild>
-              <Link href="/signup">
-                <span className="relative z-10">Pruébalo 14 días gratis</span>
-                <ArrowRight className="h-4 w-4 relative z-10 transition-transform group-hover:translate-x-1" />
-              </Link>
+            <Button size="lg" className="w-full gap-2 shadow-lg shadow-indigo-500/20" onClick={() => router.push("/signup")}>
+              Pruébalo 14 días gratis
+              <ArrowRight className="h-4 w-4" />
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-3">
               Sin tarjeta de crédito. Sin compromiso.
