@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "CLICIO - Web + Agenda + Fidelización para talleres",
-  description: "Más clientes. Más reservas. Más recompra. Todo desde una sola plataforma.",
+  title: "Clicio App — Agenda y gestión de talleres automotrices",
+  description: "Agenda digital, perfil público y fidelización para tu taller mecánico.",
   icons: [{ url: "/favicon.svg", type: "image/svg+xml" }],
 }
 
