@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import type { Service } from "@/lib/types"
 
 export default function ServicesPage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const { toast } = useToast()
   const [services, setServices] = useState<Service[]>([])
   const [tenantId, setTenantId] = useState<string | null>(null)

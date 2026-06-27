@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -26,10 +26,11 @@ export default function OnboardingPage() {
 
 function OnboardingWizard() {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const { toast } = useToast()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [addingService, setAddingService] = useState(false)
   const [tenantId, setTenantId] = useState<string | null>(null)
 
   // Step 1 - Shop info
@@ -88,12 +89,14 @@ function OnboardingWizard() {
   }
 
   async function handleAddService() {
-    if (!tenantId || !svcName.trim()) return
+    if (!tenantId || !svcName.trim() || addingService) return
+    setAddingService(true)
     const { error } = await supabase.from("services").insert({
       tenant_id: tenantId, name: svcName, price: parseInt(svcPrice) || null, duration: parseInt(svcDuration) || null,
     })
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return }
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setAddingService(false); return }
     setSvcName(""); setSvcPrice(""); setSvcDuration("")
+    setAddingService(false)
     const { data } = await supabase.from("services").select("*").eq("tenant_id", tenantId).order("name")
     setServices(data ?? [])
   }
@@ -202,7 +205,7 @@ function OnboardingWizard() {
                   <Input type="number" placeholder="60" value={svcDuration} onChange={(e) => setSvcDuration(e.target.value)} />
                 </div>
               </div>
-              <Button variant="outline" onClick={handleAddService} disabled={!svcName.trim()} className="w-full">
+              <Button variant="outline" onClick={handleAddService} disabled={!svcName.trim() || addingService} className="w-full">
                 Agregar Servicio
               </Button>
 
