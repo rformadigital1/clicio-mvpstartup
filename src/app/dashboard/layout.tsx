@@ -90,11 +90,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
           return
         }
         if (tenant.status === "trial" && tenant.trial_ends_at && new Date(tenant.trial_ends_at) < new Date()) {
-          await supabase.rpc("admin_update_tenant", {
-            p_tenant_id: profile.tenant_id,
-            p_status: "paused",
-            p_notes: null,
-          })
+          await fetch("/api/tenant/auto-pause", { method: "POST" })
           router.push("/dashboard/suspended")
           return
         }

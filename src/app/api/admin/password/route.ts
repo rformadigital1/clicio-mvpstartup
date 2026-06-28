@@ -30,27 +30,20 @@ export async function PUT(req: Request) {
 
   const { data: admin } = await supabase
     .from("super_admin")
-    .select("username, password_hash")
+    .select("username")
     .limit(1)
     .single()
 
   if (!admin) return NextResponse.json({ error: "No admin" }, { status: 500 })
 
-  const { data: valid } = await supabase.rpc("verify_admin_password", {
+  const { data: ok, error } = await supabase.rpc("change_admin_password", {
     p_username: admin.username,
-    p_password: currentPassword,
+    p_current_password: currentPassword,
+    p_new_password: newPassword,
   })
 
-  if (!valid) {
-    return NextResponse.json({ error: "Current password is wrong" }, { status: 401 })
-  }
-
-  const { error } = await supabase
-    .from("super_admin")
-    .update({ password_hash: `pending_rehash_${newPassword}` })
-    .eq("id", (await supabase.from("super_admin").select("id").limit(1).single()).data?.id)
-
   if (error) return NextResponse.json({ error: "Update failed" }, { status: 500 })
+  if (!ok) return NextResponse.json({ error: "Current password is wrong" }, { status: 401 })
 
   return NextResponse.json({ ok: true })
 }

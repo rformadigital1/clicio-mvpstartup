@@ -2,7 +2,38 @@ import { updateSession } from "@/lib/supabase/middleware"
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
+const ALLOWED_ORIGINS = [
+  "clicio.app",
+  "clicio-mvpstartup.vercel.app",
+  "localhost:3000",
+  "localhost:54321",
+]
+
+function isSameOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin")
+  if (!origin) return false
+  try {
+    const host = new URL(origin).host
+    return ALLOWED_ORIGINS.some(
+      (o) => host === o || host.endsWith("." + o) || host.endsWith(":" + o.split(":")[1])
+    )
+  } catch {
+    return false
+  }
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname, method } = request.nextUrl
+
+  if ((pathname.startsWith("/api/admin") || pathname.startsWith("/api/tenant")) && ["POST", "PUT", "DELETE"].includes(method)) {
+    if (request.headers.get("origin") && !isSameOrigin(request)) {
+      return new NextResponse(JSON.stringify({ error: "CSRF" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+  }
+
   const supabaseResponse = await updateSession(request)
 
   const url = request.nextUrl.pathname
